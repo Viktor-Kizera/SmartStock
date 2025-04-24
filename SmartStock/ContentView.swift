@@ -25,309 +25,149 @@ struct ContentView: View {
     @StateObject private var appState = AppState()
     @State private var selectedTab: Tab = .home
     @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisMonth
-    
-    var totalProducts: Int {
-        appState.productManager.products.reduce(0) { $0 + $1.monthlySales.values.reduce(0, +) }
-    }
-    
-    var stockValue: Double {
-        appState.productManager.products.reduce(0) { $0 + Double($1.monthlySales.values.reduce(0, +)) * $1.unitPrice }
-    }
-    
-    var mainCurrencySymbol: String {
-        // Якщо всі товари в одній валюті — показуємо її, інакше $ за замовчуванням
-        let all = appState.productManager.products.map { $0.currency.symbol }
-        return Set(all).count == 1 ? (all.first ?? "$") : "$"
-    }
+    @State private var showSplash = true
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
-        NavigationStack {
-            ScrollView {
-                        VStack(spacing: 12) {
-                            HeaderView()
-                                .padding(.top, 16)
-                            
-                            VStack(spacing: 20) {
-                                InventoryHealthView()
-                                AIInsightsView()
-                                QuickActionsView()
-                                RecentProductsView()
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 90)
-                    }
-                    .background(Color(uiColor: .systemGray6))
-                }
-                .tag(Tab.home)
-                
-                NavigationStack {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            // Header з фільтрами
-                            HStack {
-                                Text("Analytics")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                
-                                Spacer()
-                                
-                                Menu {
-                                    ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
-                                        Button(period.title) {
-                                            selectedAnalyticsPeriod = period
-                                        }
-                                    }
-                                } label: {
-                                    Image(systemName: "chevron.down")
-                                        .foregroundColor(.gray)
-                                }
-                                .padding(.trailing, 8)
-                                
-                                // Profile Image
-                                ZStack {
-                                    Circle()
-                                        .fill(
-                LinearGradient(
-                                                colors: [Color(hex: "FF6B6B"), Color(hex: "FF8E8E")],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: 32, height: 32)
-                                    
-                                    Text("VK")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white)
-                                }
-                                .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
-                            }
-                            
-                            // Період фільтрів
-                            HStack(spacing: 12) {
-                                ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
-                                    Button(action: {
-                                        selectedAnalyticsPeriod = period
-                                    }) {
-                                        Text(period.title)
-                                            .font(.subheadline)
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 8)
-                                            .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
-                                            .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
-                                            .cornerRadius(20)
-                                    }
-                                }
-                            }
-                            
-                            // Статистика
-                            HStack(spacing: 12) {
-                                // Total Products
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Total Products")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                    
-                                    Text("\(totalProducts.formatted(.number.grouping(.automatic)))")
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                    
-                                    // Можна додати динаміку, якщо потрібно
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.white)
-                                .cornerRadius(16)
-                                
-                                // Stock Value
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Stock Value")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                    
-                                    Text("\(mainCurrencySymbol)\(stockValue >= 1000 ? String(format: "%.1fk", stockValue/1000) : String(format: "%.2f", stockValue))")
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.white)
-                                .cornerRadius(16)
-                            }
-                            
-                            // Sales Performance
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("Sales Performance")
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                
-                                HStack(spacing: 16) {
-                                    Button(action: {}) {
-                                        Text("Actual")
-                                            .font(.subheadline)
-                                            .foregroundColor(.blue)
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 8)
-                                            .background(Color.blue.opacity(0.1))
-                                            .cornerRadius(20)
-                                    }
-                                    
-                                    Button(action: {}) {
-                                        Text("Forecast")
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 8)
-                                            .background(Color.gray.opacity(0.1))
-                                            .cornerRadius(20)
-                                    }
-                                }
-                                
-                                // Тут буде графік
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.1))
-                                    .frame(height: 200)
-                                    .cornerRadius(16)
-                            }
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(16)
-                            
-                            // Top Products
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    Text("Top Products")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                    
-                                    Spacer()
-                                    
-                                    Button("View All") {
-                                        // Action
-                                    }
-                                    .foregroundColor(.blue)
-                                }
-                                
-                                HStack(spacing: 12) {
-                                    // Product 1
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.gray.opacity(0.1))
-                                            .frame(width: 50, height: 50)
-                                        
-                                        Text("Product Name")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                        
-                                        Text("1,234 units sold")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                        
-                                        Text("In Stock")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.green.opacity(0.1))
-                                            .foregroundColor(.green)
-                                            .cornerRadius(12)
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(16)
-                                    
-                                    // Product 2
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.gray.opacity(0.1))
-                                            .frame(width: 50, height: 50)
-                                        
-                                        Text("Product Name")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                        
-                                        Text("987 units sold")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                        
-                                        Text("Low Stock")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.orange.opacity(0.1))
-                                            .foregroundColor(.orange)
-                                            .cornerRadius(12)
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(16)
-                                }
-                            }
-                            
-                            // Low Stock Alerts
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    Text("Low Stock Alerts")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                    
-                                    Spacer()
-                                    
-                                    Button("View All") {
-                                        // Action
-                                    }
-                                    .foregroundColor(.blue)
-                                }
-                                
+        ZStack {
+            Color(.systemGray6)
+                .edgesIgnoringSafeArea(.all)
+            VStack {
+                if showSplash {
+                    SplashView()
+                        .transition(.opacity)
+                        .zIndex(10)
+                } else {
+                    TabView(selection: $selectedTab) {
+                        NavigationStack {
+                            ScrollView {
                                 VStack(spacing: 12) {
-                                    ForEach(["Product Name", "Product Name"], id: \.self) { product in
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text(product)
-                                                    .font(.subheadline)
-                                                    .fontWeight(.medium)
-                                                Text("Only \(product == "Product Name" ? "5" : "8") units left")
-                                                    .font(.caption)
-                                                    .foregroundColor(.red)
-                                            }
-                                            
-                                            Spacer()
-                                            
-                                            Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
-                                        }
-                                        .padding()
-                                        .background(Color.red.opacity(0.05))
-                                        .cornerRadius(12)
+                                    HeaderView()
+                                        .padding(.top, 16)
+                                    
+                                    VStack(spacing: 20) {
+                                        InventoryHealthView()
+                                        AIInsightsView()
+                                        QuickActionsView()
+                                        RecentProductsView()
                                     }
                                 }
+                                .padding(.horizontal)
+                                .padding(.bottom, 90)
                             }
+                            .background(Color(uiColor: .systemGray6))
                         }
-                        .padding()
-                        .padding(.bottom, 90)
+                        .tag(Tab.home)
+                        
+                        NavigationStack {
+                            ScrollView {
+                                VStack(spacing: 20) {
+                                    // Header з фільтрами
+                                    HStack {
+                                        Text("Analytics")
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                        
+                                        Spacer()
+                                        
+                                        Menu {
+                                            ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                                Button(period.title) {
+                                                    selectedAnalyticsPeriod = period
+                                                }
+                                            }
+                                        } label: {
+                                            Image(systemName: "chevron.down")
+                                                .foregroundColor(.gray)
+                                        }
+                                        .padding(.trailing, 8)
+                                        
+                                        // Profile Image
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                        LinearGradient(
+                                                        colors: [Color(hex: "FF6B6B"), Color(hex: "FF8E8E")],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                )
+                                                .frame(width: 32, height: 32)
+                                            
+                                            Text("VK")
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundColor(.white)
+                                        }
+                                        .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
+                                    }
+                                    
+                                    // Період фільтрів
+                                    HStack(spacing: 12) {
+                                        ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                            Button(action: {
+                                                selectedAnalyticsPeriod = period
+                                            }) {
+                                                Text(period.title)
+                                                    .font(.subheadline)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.horizontal, 0)
+                                                    .padding(.vertical, 8)
+                                                    .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
+                                                    .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
+                                                    .cornerRadius(20)
+                                            }
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    
+                                    // Статистика
+                                    AnalyticsStatsView()
+                                        .environmentObject(appState.productManager)
+                                    
+                                    // Sales Performance
+                                    SalesPerformanceView(selectedPeriod: selectedAnalyticsPeriod)
+                                        .environmentObject(appState.productManager)
+                                    
+                                    // Top Products
+                                    TopProductsView()
+                                        .environmentObject(appState.productManager)
+                                    
+                                    // Low Stock Alerts
+                                    LowStockAlertsView()
+                                        .environmentObject(appState.productManager)
+                                }
+                                .padding()
+                                .padding(.bottom, 90)
+                            }
+                            .background(Color(uiColor: .systemGray6))
+                        }
+                        .tag(Tab.analytics)
+                        
+                        NavigationStack {
+                            ProductsView()
+                                .environmentObject(appState.productManager)
+                        }
+                        .tag(Tab.products)
+                        
+                        NavigationStack {
+                            SettingsView()
+                        }
+                        .tag(Tab.settings)
                     }
-                    .background(Color(uiColor: .systemGray6))
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    
+                    TabBarView(selectedTab: $selectedTab)
                 }
-                .tag(Tab.analytics)
-                
-                NavigationStack {
-                    ProductsView()
-                        .environmentObject(appState.productManager)
-                }
-                .tag(Tab.products)
-                
-                NavigationStack {
-                    SettingsView()
-                }
-                .tag(Tab.settings)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            
-            TabBarView(selectedTab: $selectedTab)
+            .padding(.top)
         }
-        .background(Color(uiColor: .systemGray6))
-        .ignoresSafeArea()
+        .background(Color(.systemGray6))
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showSplash = false
+                }
+            }
+        }
     }
 }
 
@@ -351,6 +191,7 @@ struct ProductsView: View {
     @State private var showingAddProduct = false
     @State private var selectedProduct: ProductItem?
     @State private var showingPrediction = false
+    @State private var editingProduct: ProductItem? = nil
     
     var filteredProducts: [ProductItem] {
         if searchText.isEmpty {
@@ -436,11 +277,13 @@ struct ProductsView: View {
                 } else {
                     VStack(spacing: 16) {
                         ForEach(filteredProducts) { product in
-                            ProductCard(product: product) {
+                            ProductCard(product: product, onTap: {
                                 selectedProduct = product
-                            } onDelete: {
+                            }, onDelete: {
                                 productManager.deleteProduct(product)
-                            }
+                            }, onEdit: {
+                                editingProduct = product
+                            })
                         }
                     }
                 }
@@ -455,6 +298,11 @@ struct ProductsView: View {
         .sheet(item: $selectedProduct) { product in
             ProductDetailView(product: product)
         }
+        .sheet(item: $editingProduct) { product in
+            EditProductView(product: product) { updated in
+                productManager.updateProduct(updated)
+            }
+        }
     }
 }
 
@@ -462,61 +310,107 @@ struct ProductCard: View {
     let product: ProductItem
     let onTap: () -> Void
     let onDelete: () -> Void
+    let onEdit: () -> Void
     @State private var showDeleteAlert = false
+    @State private var showActions = false
     
     var body: some View {
-        HStack(spacing: 16) {
-            Text(product.emoji)
-                .font(.system(size: 40))
-                .frame(width: 60, height: 60)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text(product.name)
-                    .font(.headline)
-                
-                let totalSales = product.monthlySales.values.reduce(0, +)
-                Text("Total sales: \(totalSales) units")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                
-                if product.unitPrice > 0 {
-                    Text("\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice))/unit")
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: 16) {
+                Text(product.emoji)
+                    .font(.system(size: 40))
+                    .frame(width: 60, height: 60)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(12)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(product.name)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // Total sales і $/unit завжди в один ряд
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        let totalSales = product.monthlySales.values.reduce(0, +)
+                        Text("Total sales: \(totalSales) units")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+                        Text(product.unitPrice > 0 ? "\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice))/unit" : "")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Spacer()
+                // Кнопка "..." справа
+                Button(action: { withAnimation { showActions.toggle() } }) {
+                    Image(systemName: "ellipsis")
+                        .rotationEffect(.degrees(90))
+                        .foregroundColor(.gray)
+                        .padding(8)
                 }
             }
-            
-            Spacer()
-            
-            Button(action: onTap) {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundColor(.blue)
-                    .padding(8)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            
-            Button(action: { showDeleteAlert = true }) {
-                Image(systemName: "trash")
-                    .foregroundColor(.red)
-                    .padding(8)
-                    .background(Color.red.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            .alert(isPresented: $showDeleteAlert) {
-                Alert(
-                    title: Text("Delete product?"),
-                    message: Text("Are you sure you want to delete this product?"),
-                    primaryButton: .destructive(Text("Yes"), action: onDelete),
-                    secondaryButton: .cancel(Text("No"))
-                )
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
+            // Блок з кнопками, який розширює тільки низ картки
+            if showActions {
+                VStack {
+                    HStack(spacing: 24) {
+                        GlassButton(systemName: "pencil", color: .orange, action: { showActions = false; onEdit() }, size: 36)
+                        GlassButton(systemName: "chart.line.uptrend.xyaxis", color: .blue, action: { showActions = false; onTap() }, size: 36)
+                        GlassButton(systemName: "trash", color: .red, action: { showActions = false; showDeleteAlert = true }, size: 36)
+                    }
+                    .padding(.vertical, 10)
+                }
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(2)
             }
         }
-        .padding()
         .background(Color.white)
         .cornerRadius(16)
+        .alert(isPresented: $showDeleteAlert) {
+            Alert(
+                title: Text("Delete product?"),
+                message: Text("Are you sure you want to delete this product?"),
+                primaryButton: .destructive(Text("Yes"), action: onDelete),
+                secondaryButton: .cancel(Text("No"))
+            )
+        }
+        .padding(.horizontal, 2)
+        .animation(.easeInOut(duration: 0.18), value: showActions)
+    }
+}
+
+struct GlassButton: View {
+    let systemName: String
+    let color: Color
+    let action: () -> Void
+    var size: CGFloat = 50
+    @State private var pressed = false
+    var body: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.12)) {
+                pressed = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                pressed = false
+                action()
+            }
+        }) {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.5))
+                    .background(.ultraThinMaterial, in: Circle())
+                    .shadow(color: color.opacity(0.18), radius: 6, x: 0, y: 2)
+                Image(systemName: systemName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            .frame(width: pressed ? size - 4 : size, height: pressed ? size - 4 : size)
+            .scaleEffect(pressed ? 0.92 : 1.0)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -542,8 +436,8 @@ struct AddProductView: View {
                             .foregroundColor(.gray)
                         
                         TextField("Product Name", text: $productName)
-                            .padding()
-                            .background(Color.white)
+        .padding()
+        .background(Color.white)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
@@ -659,7 +553,6 @@ struct AddProductView: View {
                                     Text("units")
                                         .font(.system(size: 14))
                                         .foregroundColor(.gray)
-                                        .frame(width: 40, alignment: .trailing)
                                 }
                                 .padding(12)
                                 .background(
@@ -769,7 +662,7 @@ struct ProductDetailView: View {
                     // Forecast Stats Block
                     VStack(spacing: 16) {
                         Text("Total Forecast for Next Year")
-                            .font(.headline)
+                    .font(.headline)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         HStack(spacing: 16) {
@@ -874,7 +767,7 @@ struct ProductDetailView: View {
                         }
                         .frame(height: 200)
                     }
-                    .padding()
+            .padding()
                     .background(Color(uiColor: .systemGray6))
                     .cornerRadius(16)
                     
@@ -989,7 +882,7 @@ struct SettingsView: View {
                     ZStack {
                         Circle()
                             .fill(
-                                LinearGradient(
+                LinearGradient(
                                     colors: [Color(hex: "FF6B6B"), Color(hex: "FF8E8E")],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -999,7 +892,7 @@ struct SettingsView: View {
                         
                         Text("VK")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+            .foregroundColor(.white)
                     }
                     .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
                 }
@@ -1007,7 +900,7 @@ struct SettingsView: View {
                 // Profile Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Profile")
-                        .font(.headline)
+                    .font(.headline)
                     
                     VStack(spacing: 12) {
                         SettingsRow(icon: "person.fill", title: "Account", subtitle: "Viktor Kizera")
@@ -1068,14 +961,14 @@ struct SettingsView: View {
                 HStack {
                     Text("Version 1.0.0")
                         .font(.footnote)
-                        .foregroundColor(.gray)
-                    
+                    .foregroundColor(.gray)
+                
                     Spacer()
                     
                     Button(action: {}) {
                         Text("Check for Updates")
                             .font(.footnote)
-                            .foregroundColor(.blue)
+                        .foregroundColor(.blue)
                     }
                 }
                 .padding(.top, 8)
@@ -1103,13 +996,13 @@ struct SettingsRow: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.subheadline)
+                        .font(.subheadline)
                     .fontWeight(.medium)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(.gray)
-            }
+                        .foregroundColor(.gray)
+                }
             
             Spacer()
             
@@ -1117,7 +1010,7 @@ struct SettingsRow: View {
                 .font(.system(size: 14))
                 .foregroundColor(.gray)
         }
-        .padding()
+                .padding()
         .background(Color(uiColor: .systemGray6))
         .cornerRadius(12)
     }
@@ -1138,14 +1031,14 @@ struct SettingsToggleRow: View {
                 .background(Color.blue.opacity(0.1))
                 .cornerRadius(8)
             
-            VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                        .foregroundColor(.gray)
             }
             
             Spacer()
@@ -1156,6 +1049,595 @@ struct SettingsToggleRow: View {
             .padding()
         .background(Color(uiColor: .systemGray6))
         .cornerRadius(12)
+    }
+}
+
+struct AnalyticsStatsView: View {
+    @EnvironmentObject var productManager: ProductManager
+    var mainCurrencySymbol: String {
+        let all = productManager.products.map { $0.currency.symbol }
+        return Set(all).count == 1 ? (all.first ?? "$") : "$"
+    }
+    var totalProducts: Int {
+        productManager.products.reduce(0) { $0 + $1.monthlySales.values.reduce(0, +) }
+    }
+    var stockValue: Double {
+        productManager.products.reduce(0) { $0 + Double($1.monthlySales.values.reduce(0, +)) * $1.unitPrice }
+    }
+    var body: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 12) {
+                Spacer(minLength: 8)
+                Image(systemName: "cube.box.fill")
+                    .font(.system(size: 28))
+                        .foregroundColor(.blue)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(Color.blue.opacity(0.12)))
+                Text("Total Products")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                Text("\(totalProducts.formatted(.number.grouping(.automatic)))")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.black)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 8)
+            }
+            .frame(maxWidth: .infinity, minHeight: 120)
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+            
+            VStack(spacing: 12) {
+                Spacer(minLength: 8)
+                Image(systemName: "dollarsign.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.green)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(Color.green.opacity(0.12)))
+                Text("Stock Value")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                Text("\(mainCurrencySymbol)\(stockValue >= 1000 ? String(format: "%.1fk", stockValue/1000) : String(format: "%.2f", stockValue))")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.black)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 8)
+            }
+            .frame(maxWidth: .infinity, minHeight: 120)
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+        }
+    }
+}
+
+struct SalesPerformanceView: View {
+    @EnvironmentObject var productManager: ProductManager
+    var selectedPeriod: AnalyticsPeriod
+    @State private var selectedType: SalesType = .actual
+    
+    enum SalesType: String, CaseIterable { case actual = "Actual", forecast = "Forecast" }
+    
+    let months: [String] = [
+        "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+    ]
+    
+    // Сума продажів по кожному місяцю для всіх товарів
+    var actualData: [Double] {
+        months.map { month in
+            Double(productManager.products.reduce(0) { $0 + ($1.monthlySales[month] ?? 0) })
+        }
+    }
+    // Forecast: для кожного місяця — сума продажів по всіх товарах за цей місяць * 1.1
+    var forecastData: [Double] {
+        months.map { month in
+            let sum = productManager.products.reduce(0) { $0 + ($1.monthlySales[month] ?? 0) }
+            return Double(sum) * 1.1
+        }
+    }
+    var chartData: [Double] {
+        selectedType == .actual ? actualData : forecastData
+    }
+    var chartColor: Color {
+        selectedType == .actual ? .blue : .purple
+    }
+    func formattedValue(_ value: Double) -> String {
+        if value >= 1000 {
+            return String(format: "%.1fk", value/1000)
+        } else {
+            return String(Int(round(value)))
+        }
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Sales Performance")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Spacer()
+                HStack(spacing: 8) {
+                    ForEach(SalesType.allCases, id: \.self) { type in
+                        Button(action: { selectedType = type }) {
+                            Text(type.rawValue)
+                                .font(.subheadline)
+                                .frame(width: 80)
+                                .padding(.vertical, 8)
+                                .background(selectedType == type ? (type == .actual ? Color.blue : Color.purple) : Color.gray.opacity(0.1))
+                                .foregroundColor(selectedType == type ? .white : .gray)
+                                .cornerRadius(20)
+                        }
+                    }
+                }
+            }
+            .padding(.bottom, 4)
+            GeometryReader { geo in
+                let barCount = CGFloat(months.count)
+                let barSpacing: CGFloat = 8
+                let barWidth = max(18, (geo.size.width - barSpacing * (barCount - 1)) / barCount)
+                let chartHeight = geo.size.height - 36
+                // Логарифмічне масштабування
+                let logData = chartData.map { $0 > 0 ? log10($0) : 0 }
+                let maxLog = logData.max() ?? 1
+                HStack(alignment: .bottom, spacing: barSpacing) {
+                    ForEach(0..<months.count, id: \.self) { idx in
+                        let value = chartData[idx]
+                        let logValue = logData[idx]
+                        VStack(spacing: 0) {
+                            Text(formattedValue(value))
+                                    .font(.caption2)
+                                .foregroundColor(chartColor)
+                                .frame(height: 16)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(chartColor)
+                                .frame(
+                                    width: barWidth,
+                                    height: value > 0 && maxLog > 0 ? max(8, CGFloat(logValue) / CGFloat(maxLog) * chartHeight) : 8
+                                )
+                            Text(months[idx].prefix(3))
+                                    .font(.caption2)
+                                .foregroundColor(.gray)
+                                .frame(width: barWidth, height: 36, alignment: .center)
+                                .rotationEffect(.degrees(-45))
+                                .lineLimit(1)
+                        }
+                        .frame(width: barWidth, alignment: .bottom)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            }
+            .frame(height: 300)
+            }
+            .padding()
+            .background(Color.white)
+        .cornerRadius(16)
+    }
+}
+
+struct EditProductView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var productManager: ProductManager
+    @State var product: ProductItem
+    var onSave: (ProductItem) -> Void
+    private let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 24) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Product Name")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        TextField("Product Name", text: $product.name)
+        .padding()
+        .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                    }
+                    .padding(.horizontal)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Price")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        HStack(spacing: 12) {
+                            HStack {
+                                Text(product.currency.symbol)
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                TextField("", value: $product.unitPrice, formatter: priceFormatter())
+                                    .keyboardType(.decimalPad)
+                                Spacer()
+                            }
+            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            .frame(maxWidth: .infinity)
+                            Picker("", selection: $product.currency) {
+                                ForEach(Currency.allCases, id: \.self) { currency in
+                                    Text(currency.symbol).tag(currency)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .frame(width: 80)
+                        }
+                    }
+                    .padding(.horizontal)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Monthly Sales Data (2024)")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
+                        VStack(spacing: 16) {
+                            ForEach(months, id: \.self) { month in
+                                HStack {
+                                    Text(month)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.black)
+                                        .frame(width: 100, alignment: .leading)
+                                    Spacer()
+                                    HStack(spacing: 12) {
+                                        Button(action: {
+                                            product.monthlySales[month] = max(0, (product.monthlySales[month] ?? 0) - 1)
+                                        }) {
+                                            Image(systemName: "minus.circle.fill")
+                                                .foregroundColor(.red)
+                                                .font(.system(size: 26))
+                                        }
+                                        ZStack(alignment: .center) {
+                                            TextField("0", text: Binding(
+                                                get: {
+                                                    if let sales = product.monthlySales[month], sales > 0 {
+                                                        return "\(sales)"
+                                                    } else {
+                                                        return ""
+                                                    }
+                                                },
+                                                set: {
+                                                    if let value = Int($0) {
+                                                        product.monthlySales[month] = value
+                                                    } else {
+                                                        product.monthlySales[month] = 0
+                                                    }
+                                                }
+                                            ))
+                                            .multilineTextAlignment(.center)
+                                            .keyboardType(.numberPad)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .frame(width: 60)
+                                            .background(Color(.systemBackground))
+                                            .cornerRadius(8)
+                                        }
+                                        Button(action: {
+                                            product.monthlySales[month] = (product.monthlySales[month] ?? 0) + 1
+                                        }) {
+                                            Image(systemName: "plus.circle.fill")
+                                                .foregroundColor(.green)
+                                                .font(.system(size: 26))
+                                        }
+                                    }
+                                    Text("units")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gray)
+                                        .frame(width: 40, alignment: .trailing)
+                                }
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                                )
+                            }
+                        }
+                    }
+            .padding()
+                }
+            }
+            .navigationTitle("Edit Product")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        onSave(product)
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    private func priceFormatter() -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter
+    }
+}
+
+struct TopProductsView: View {
+    @EnvironmentObject var productManager: ProductManager
+    @State private var showAll = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Top Products")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Spacer()
+                Button("View All") {
+                    showAll = true
+                }
+                .foregroundColor(.blue)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(productManager.products) { product in
+                        TopProductCard(product: product)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .sheet(isPresented: $showAll) {
+            TopProductsListView()
+                .environmentObject(productManager)
+        }
+    }
+}
+
+struct TopProductCard: View {
+    let product: ProductItem
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    var status: (String, Color) {
+        if totalSales > 500 {
+            return ("High", Color.green)
+        } else if totalSales >= 50 {
+            return ("Medium", Color.yellow)
+        } else {
+            return ("Low", Color.red)
+        }
+    }
+    var body: some View {
+        VStack(spacing: 10) {
+            Text(product.emoji)
+                .font(.system(size: 36))
+                .frame(width: 50, height: 50)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+            Text(product.name)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .frame(maxWidth: 90)
+            Text("\(totalSales.formatted(.number.grouping(.automatic))) units sold")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            Text(status.0)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(status.1.opacity(0.12))
+                .foregroundColor(status.1)
+                .cornerRadius(12)
+        }
+        .frame(width: 120, height: 160)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+    }
+}
+
+struct TopProductsListView: View {
+    @EnvironmentObject var productManager: ProductManager
+    @Environment(\.dismiss) var dismiss
+    var body: some View {
+        NavigationView {
+            List(productManager.products) { product in
+                TopProductListRow(product: product)
+            }
+            .listStyle(.plain)
+            .navigationTitle("All Products")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct TopProductListRow: View {
+    let product: ProductItem
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    var status: (String, Color) {
+        if totalSales > 500 {
+            return ("High", Color.green)
+        } else if totalSales >= 50 {
+            return ("Medium", Color.yellow)
+        } else {
+            return ("Low", Color.red)
+        }
+    }
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(product.emoji)
+                .font(.system(size: 32))
+                .frame(width: 44, height: 44)
+                .background(Color.gray.opacity(0.1))
+            .cornerRadius(10)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.headline)
+                Text("\(totalSales.formatted(.number.grouping(.automatic))) units sold")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
+            Spacer()
+            Text(status.0)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(status.1.opacity(0.12))
+                .foregroundColor(status.1)
+                .cornerRadius(12)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct LowStockAlertsView: View {
+    @EnvironmentObject var productManager: ProductManager
+    @State private var showAll = false
+    @State private var selectedProduct: ProductItem? = nil
+    var lowStockProducts: [ProductItem] {
+        productManager.products.filter { $0.monthlySales.values.reduce(0, +) < 10 }
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Low Stock Alerts")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Spacer()
+                Button("View All") {
+                    showAll = true
+                }
+                .foregroundColor(.blue)
+            }
+            VStack(spacing: 12) {
+                ForEach(lowStockProducts) { product in
+                    Button(action: { selectedProduct = product }) {
+                        LowStockAlertRow(product: product)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .sheet(isPresented: $showAll) {
+            LowStockAlertsListView(products: lowStockProducts)
+        }
+        .sheet(item: $selectedProduct) { product in
+            ProductDetailView(product: product)
+                .environmentObject(productManager)
+        }
+    }
+}
+
+struct LowStockAlertRow: View {
+    let product: ProductItem
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(product.emoji)
+                .font(.system(size: 36))
+                .frame(width: 50, height: 50)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(product.name)
+                    .font(.headline)
+                    .fontWeight(.medium)
+                Text("Only sold \(totalSales) units")
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
+                .font(.system(size: 20, weight: .semibold))
+        }
+        .padding(18)
+        .background(Color.red.opacity(0.07))
+        .cornerRadius(20)
+    }
+}
+
+struct LowStockAlertsListView: View {
+    let products: [ProductItem]
+    @Environment(\.dismiss) var dismiss
+    @State private var selectedProduct: ProductItem? = nil
+    var body: some View {
+        NavigationView {
+            List(products) { product in
+                Button(action: { selectedProduct = product }) {
+                    LowStockAlertRow(product: product)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .listStyle(.plain)
+            .navigationTitle("Low Stock Alerts")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .sheet(item: $selectedProduct) { product in
+                ProductDetailView(product: product)
+            }
+        }
+    }
+}
+
+struct SplashView: View {
+    @State private var animate = false
+    @State private var progress: Double = 0
+    let progressSteps: [Double] = [0, 0.1, 0.4, 0.65, 0.85, 1.0]
+    let stepDelays: [Double] = [0, 0.3, 0.45, 0.35, 0.25, 0.2] // seconds between steps
+    var body: some View {
+        ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea()
+            VStack(spacing: 24) {
+                Text("📦")
+                    .font(.system(size: 80))
+                    .scaleEffect(animate ? 1.1 : 0.8)
+                    .opacity(animate ? 1 : 0.7)
+                    .shadow(color: Color.accentColor.opacity(0.18), radius: 16, x: 0, y: 8)
+                    .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: animate)
+                Text("SmartStock")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundColor(Color.accentColor)
+                    .opacity(animate ? 1 : 0.7)
+                    .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: animate)
+                VStack(spacing: 10) {
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color(.systemGray5))
+                            .frame(height: 10)
+                        Capsule()
+                            .fill(Color.accentColor)
+                            .frame(width: CGFloat(progress) * 220, height: 10)
+                            .animation(.easeInOut(duration: 0.3), value: progress)
+                    }
+                    .frame(width: 220)
+                    Text("Завантаження: \(Int(progress * 100))%")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+            }
+            .padding(.top, 8)
+            .padding(.bottom, 8)
+        }
+        .onAppear {
+            animate = true
+            // Анімація стрибками
+            var delay: Double = 0
+            for (idx, step) in progressSteps.enumerated() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        progress = step
+                    }
+                }
+                if idx < stepDelays.count { delay += stepDelays[idx] }
+            }
+        }
     }
 }
 
