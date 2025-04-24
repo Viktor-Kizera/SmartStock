@@ -349,14 +349,6 @@ struct ProductsView: View {
                     
                     Spacer()
                     
-                    Button(action: {
-                        showingAddProduct = true
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                    }
-                    
                     ZStack {
                         Circle()
                             .fill(
@@ -375,24 +367,58 @@ struct ProductsView: View {
                     .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 
-                // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                // Search Bar and Add Button
+                HStack(spacing: 12) {
+                    // Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        
+                        TextField("Search products", text: $searchText)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.white)
+                    .cornerRadius(12)
                     
-                    TextField("Search products", text: $searchText)
+                    // Add Button
+                    Button(action: {
+                        showingAddProduct = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.blue)
+                            .frame(width: 38, height: 38)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                    }
                 }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(12)
+                .frame(height: 38)
                 
                 // Products List
-                VStack(spacing: 16) {
-                    ForEach(filteredProducts) { product in
-                        ProductCard(product: product) {
-                            selectedProduct = product
-                        } onDelete: {
-                            productManager.deleteProduct(product)
+                if filteredProducts.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "box.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.gray)
+                        Text("No products found")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text("Try adjusting your search or add a new product")
+                            .font(.subheadline)
+                            .foregroundColor(.gray.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                } else {
+                    VStack(spacing: 16) {
+                        ForEach(filteredProducts) { product in
+                            ProductCard(product: product) {
+                                selectedProduct = product
+                            } onDelete: {
+                                productManager.deleteProduct(product)
+                            }
                         }
                     }
                 }
@@ -562,30 +588,32 @@ struct ProductDetailView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header with Emoji
-                    HStack {
-                        Text(product.emoji)
-                            .font(.system(size: 60))
-                            .frame(width: 80, height: 80)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(16)
-                        
-                        VStack(alignment: .leading) {
+                    // Product Info Block
+                    VStack(spacing: 0) {
+                        HStack(spacing: 16) {
+                            Text(product.emoji)
+                                .font(.system(size: 60))
+                                .frame(width: 80, height: 80)
+                                .background(Color.white)
+                                .cornerRadius(16)
+                            
                             Text(product.name)
-                                .font(.title)
-                                .fontWeight(.bold)
+                                .font(.system(size: 34, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
                         }
-                        
-                        Spacer()
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(16)
                     }
-                    .padding()
-                    .background(Color.white)
                     .cornerRadius(16)
                     
-                    // Total Yearly Forecast
-                    VStack(alignment: .leading, spacing: 16) {
+                    // Forecast Stats Block
+                    VStack(spacing: 16) {
                         Text("Total Forecast for Next Year")
                             .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         HStack(spacing: 16) {
                             VStack(alignment: .leading, spacing: 8) {
@@ -623,7 +651,6 @@ struct ProductDetailView: View {
                             .cornerRadius(16)
                         }
                         
-                        // Best Selling Month
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Best Selling Month")
                                 .font(.subheadline)
@@ -651,10 +678,10 @@ struct ProductDetailView: View {
                         .cornerRadius(16)
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color(uiColor: .systemGray6))
                     .cornerRadius(16)
                     
-                    // Sales Chart
+                    // Sales Performance Block
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Sales Performance")
                             .font(.headline)
@@ -671,10 +698,10 @@ struct ProductDetailView: View {
                         .frame(height: 200)
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color(uiColor: .systemGray6))
                     .cornerRadius(16)
                     
-                    // Quarterly Forecast
+                    // Quarterly Forecast Block
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Quarterly Forecast")
                             .font(.headline)
@@ -703,11 +730,9 @@ struct ProductDetailView: View {
                                 .padding()
                                 .background(Color(UIColor.systemBackground))
                                 .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                             }
                         }
                         
-                        // Monthly Forecast Chart
                         Chart {
                             ForEach(months, id: \.self) { month in
                                 LineMark(
@@ -729,13 +754,13 @@ struct ProductDetailView: View {
                         .frame(height: 200)
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color(uiColor: .systemGray6))
                     .cornerRadius(16)
                 }
                 .padding()
             }
-            .navigationTitle(product.name)
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Color(uiColor: .systemGray6))
+            .navigationBarHidden(true)
             .onAppear {
                 predictedDemand = productManager.predictDemand(for: product)
             }
