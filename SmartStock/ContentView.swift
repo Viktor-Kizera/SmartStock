@@ -20,11 +20,11 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
-        NavigationStack {
-            ScrollView {
+                NavigationStack {
+                    ScrollView {
                         VStack(spacing: 12) {
                             HeaderView()
-                                .padding(.top, 8)
+                                .padding(.top, 16)
                             
                             VStack(spacing: 20) {
                                 InventoryHealthView()
@@ -37,7 +37,6 @@ struct ContentView: View {
                         .padding(.bottom, 90)
                     }
                     .background(Color(uiColor: .systemGray6))
-                    .edgesIgnoringSafeArea(.top)
                 }
                 .tag(Tab.home)
                 
@@ -314,6 +313,8 @@ struct ContentView: View {
             
             TabBarView(selectedTab: $selectedTab)
         }
+        .background(Color(uiColor: .systemGray6))
+        .ignoresSafeArea()
     }
 }
 
