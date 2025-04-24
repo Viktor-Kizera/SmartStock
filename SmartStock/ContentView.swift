@@ -398,62 +398,70 @@ struct ProductCard: View {
     @State private var showActions = false
     
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .trailing) {
-                HStack(alignment: .top, spacing: 16) {
-                    Text(product.emoji)
-                        .font(.system(size: 40))
-                        .frame(width: 60, height: 60)
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(12)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(product.name)
-                            .font(.headline)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        HStack(spacing: 12) {
-                            let totalSales = product.monthlySales.values.reduce(0, +)
-                            Text("Total sales: \(totalSales) units")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                            if product.unitPrice > 0 {
-                                Text("\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice))/unit")
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                    }
-                    Spacer()
-                    // Кнопка "..." для показу дій
-                    Button(action: { withAnimation { showActions.toggle() } }) {
-                        Image(systemName: "ellipsis")
-                            .rotationEffect(.degrees(90))
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: 16) {
+                Text(product.emoji)
+                    .font(.system(size: 40))
+                    .frame(width: 60, height: 60)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(12)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(product.name)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // Total sales і $/unit завжди в один ряд
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        let totalSales = product.monthlySales.values.reduce(0, +)
+                        Text("Total sales: \(totalSales) units")
+                            .font(.subheadline)
                             .foregroundColor(.gray)
-                            .padding(8)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+                        Text(product.unitPrice > 0 ? "\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice))/unit" : "")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                // Вертикальні кнопки справа, зʼявляються з анімацією
-                VStack(spacing: 16) {
-                    GlassButton(systemName: "pencil", color: .orange, action: onEdit, size: max(32, min(geo.size.height * 0.18, 48)))
-                    GlassButton(systemName: "chart.line.uptrend.xyaxis", color: .blue, action: onTap, size: max(32, min(geo.size.height * 0.18, 48)))
-                    GlassButton(systemName: "trash", color: .red, action: { showDeleteAlert = true }, size: max(32, min(geo.size.height * 0.18, 48)))
+                Spacer()
+                // Кнопка "..." справа
+                Button(action: { withAnimation { showActions.toggle() } }) {
+                    Image(systemName: "ellipsis")
+                        .rotationEffect(.degrees(90))
+                        .foregroundColor(.gray)
+                        .padding(8)
                 }
-                .padding(.trailing, 8)
-                .opacity(showActions ? 1 : 0)
-                .animation(.easeInOut(duration: 0.18), value: showActions)
             }
-            .alert(isPresented: $showDeleteAlert) {
-                Alert(
-                    title: Text("Delete product?"),
-                    message: Text("Are you sure you want to delete this product?"),
-                    primaryButton: .destructive(Text("Yes"), action: onDelete),
-                    secondaryButton: .cancel(Text("No"))
-                )
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
+            // Блок з кнопками, який розширює тільки низ картки
+            if showActions {
+                VStack {
+                    HStack(spacing: 24) {
+                        GlassButton(systemName: "pencil", color: .orange, action: { showActions = false; onEdit() }, size: 36)
+                        GlassButton(systemName: "chart.line.uptrend.xyaxis", color: .blue, action: { showActions = false; onTap() }, size: 36)
+                        GlassButton(systemName: "trash", color: .red, action: { showActions = false; showDeleteAlert = true }, size: 36)
+                    }
+                    .padding(.vertical, 10)
+                }
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(2)
             }
         }
-        .frame(height: 100)
-        .padding()
         .background(Color.white)
         .cornerRadius(16)
+        .alert(isPresented: $showDeleteAlert) {
+            Alert(
+                title: Text("Delete product?"),
+                message: Text("Are you sure you want to delete this product?"),
+                primaryButton: .destructive(Text("Yes"), action: onDelete),
+                secondaryButton: .cancel(Text("No"))
+            )
+        }
+        .padding(.horizontal, 2)
+        .animation(.easeInOut(duration: 0.18), value: showActions)
     }
 }
 
