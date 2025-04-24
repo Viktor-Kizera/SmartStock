@@ -25,131 +25,149 @@ struct ContentView: View {
     @StateObject private var appState = AppState()
     @State private var selectedTab: Tab = .home
     @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisMonth
+    @State private var showSplash = true
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
-        NavigationStack {
-            ScrollView {
-                        VStack(spacing: 12) {
-                            HeaderView()
-                                .padding(.top, 16)
-                            
-                            VStack(spacing: 20) {
-                                InventoryHealthView()
-                                AIInsightsView()
-                                QuickActionsView()
-                                RecentProductsView()
-                    }
-                }
-                .padding(.horizontal)
-                        .padding(.bottom, 90)
-                    }
-                    .background(Color(uiColor: .systemGray6))
-                }
-                .tag(Tab.home)
-                
-                NavigationStack {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            // Header з фільтрами
-                            HStack {
-                                Text("Analytics")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                
-                                Spacer()
-                                
-                                Menu {
-                                    ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
-                                        Button(period.title) {
-                                            selectedAnalyticsPeriod = period
+        ZStack {
+            Color(.systemGray6)
+                .edgesIgnoringSafeArea(.all)
+            VStack {
+                if showSplash {
+                    SplashView()
+                        .transition(.opacity)
+                        .zIndex(10)
+                } else {
+                    TabView(selection: $selectedTab) {
+                        NavigationStack {
+                            ScrollView {
+                                VStack(spacing: 12) {
+                                    HeaderView()
+                                        .padding(.top, 16)
+                                    
+                                    VStack(spacing: 20) {
+                                        InventoryHealthView()
+                                        AIInsightsView()
+                                        QuickActionsView()
+                                        RecentProductsView()
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .padding(.bottom, 90)
+                            }
+                            .background(Color(uiColor: .systemGray6))
+                        }
+                        .tag(Tab.home)
+                        
+                        NavigationStack {
+                            ScrollView {
+                                VStack(spacing: 20) {
+                                    // Header з фільтрами
+                                    HStack {
+                                        Text("Analytics")
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                        
+                                        Spacer()
+                                        
+                                        Menu {
+                                            ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                                Button(period.title) {
+                                                    selectedAnalyticsPeriod = period
+                                                }
+                                            }
+                                        } label: {
+                                            Image(systemName: "chevron.down")
+                                                .foregroundColor(.gray)
+                                        }
+                                        .padding(.trailing, 8)
+                                        
+                                        // Profile Image
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                        LinearGradient(
+                                                        colors: [Color(hex: "FF6B6B"), Color(hex: "FF8E8E")],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                )
+                                                .frame(width: 32, height: 32)
+                                            
+                                            Text("VK")
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundColor(.white)
+                                        }
+                                        .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
+                                    }
+                                    
+                                    // Період фільтрів
+                                    HStack(spacing: 12) {
+                                        ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                            Button(action: {
+                                                selectedAnalyticsPeriod = period
+                                            }) {
+                                                Text(period.title)
+                                                    .font(.subheadline)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.horizontal, 0)
+                                                    .padding(.vertical, 8)
+                                                    .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
+                                                    .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
+                                                    .cornerRadius(20)
+                                            }
                                         }
                                     }
-                                } label: {
-                                    Image(systemName: "chevron.down")
-                                        .foregroundColor(.gray)
-                                }
-                                .padding(.trailing, 8)
-                                
-                                // Profile Image
-                                ZStack {
-                                    Circle()
-                                        .fill(
-                LinearGradient(
-                                                colors: [Color(hex: "FF6B6B"), Color(hex: "FF8E8E")],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: 32, height: 32)
+                                    .frame(maxWidth: .infinity)
                                     
-                                    Text("VK")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white)
+                                    // Статистика
+                                    AnalyticsStatsView()
+                                        .environmentObject(appState.productManager)
+                                    
+                                    // Sales Performance
+                                    SalesPerformanceView(selectedPeriod: selectedAnalyticsPeriod)
+                                        .environmentObject(appState.productManager)
+                                    
+                                    // Top Products
+                                    TopProductsView()
+                                        .environmentObject(appState.productManager)
+                                    
+                                    // Low Stock Alerts
+                                    LowStockAlertsView()
+                                        .environmentObject(appState.productManager)
                                 }
-                                .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
+                                .padding()
+                                .padding(.bottom, 90)
                             }
-                            
-                            // Період фільтрів
-                            HStack(spacing: 12) {
-                                ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
-                                    Button(action: {
-                                        selectedAnalyticsPeriod = period
-                                    }) {
-                                        Text(period.title)
-                                            .font(.subheadline)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.horizontal, 0)
-                                            .padding(.vertical, 8)
-                                            .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
-                                            .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
-                                            .cornerRadius(20)
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            
-                            // Статистика
-                            AnalyticsStatsView()
-                                .environmentObject(appState.productManager)
-                            
-                            // Sales Performance
-                            SalesPerformanceView(selectedPeriod: selectedAnalyticsPeriod)
-                                .environmentObject(appState.productManager)
-                            
-                            // Top Products
-                            TopProductsView()
-                                .environmentObject(appState.productManager)
-                            
-                            // Low Stock Alerts
-                            LowStockAlertsView()
+                            .background(Color(uiColor: .systemGray6))
+                        }
+                        .tag(Tab.analytics)
+                        
+                        NavigationStack {
+                            ProductsView()
                                 .environmentObject(appState.productManager)
                         }
-                        .padding()
-                        .padding(.bottom, 90)
+                        .tag(Tab.products)
+                        
+                        NavigationStack {
+                            SettingsView()
+                        }
+                        .tag(Tab.settings)
                     }
-                    .background(Color(uiColor: .systemGray6))
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    
+                    TabBarView(selectedTab: $selectedTab)
                 }
-                .tag(Tab.analytics)
-                
-                NavigationStack {
-                    ProductsView()
-                        .environmentObject(appState.productManager)
-                }
-                .tag(Tab.products)
-                
-                NavigationStack {
-                    SettingsView()
-                }
-                .tag(Tab.settings)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            
-            TabBarView(selectedTab: $selectedTab)
+            .padding(.top)
         }
-        .background(Color(uiColor: .systemGray6))
-        .ignoresSafeArea()
+        .background(Color(.systemGray6))
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showSplash = false
+                }
+            }
+        }
     }
 }
 
@@ -1561,6 +1579,63 @@ struct LowStockAlertsListView: View {
             }
             .sheet(item: $selectedProduct) { product in
                 ProductDetailView(product: product)
+            }
+        }
+    }
+}
+
+struct SplashView: View {
+    @State private var animate = false
+    @State private var progress: Double = 0
+    let progressSteps: [Double] = [0, 0.1, 0.4, 0.65, 0.85, 1.0]
+    let stepDelays: [Double] = [0, 0.3, 0.45, 0.35, 0.25, 0.2] // seconds between steps
+    var body: some View {
+        ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea()
+            VStack(spacing: 24) {
+                Text("📦")
+                    .font(.system(size: 80))
+                    .scaleEffect(animate ? 1.1 : 0.8)
+                    .opacity(animate ? 1 : 0.7)
+                    .shadow(color: Color.accentColor.opacity(0.18), radius: 16, x: 0, y: 8)
+                    .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: animate)
+                Text("SmartStock")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundColor(Color.accentColor)
+                    .opacity(animate ? 1 : 0.7)
+                    .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: animate)
+                VStack(spacing: 10) {
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color(.systemGray5))
+                            .frame(height: 10)
+                        Capsule()
+                            .fill(Color.accentColor)
+                            .frame(width: CGFloat(progress) * 220, height: 10)
+                            .animation(.easeInOut(duration: 0.3), value: progress)
+                    }
+                    .frame(width: 220)
+                    Text("Завантаження: \(Int(progress * 100))%")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+            }
+            .padding(.top, 8)
+            .padding(.bottom, 8)
+        }
+        .onAppear {
+            animate = true
+            // Анімація стрибками
+            var delay: Double = 0
+            for (idx, step) in progressSteps.enumerated() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        progress = step
+                    }
+                }
+                if idx < stepDelays.count { delay += stepDelays[idx] }
             }
         }
     }
