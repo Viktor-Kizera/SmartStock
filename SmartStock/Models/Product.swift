@@ -6,13 +6,17 @@ struct ProductItem: Identifiable, Codable, Hashable, Equatable {
     var monthlySales: [String: Int]
     var predictedDemand: [String: Int]
     var emoji: String
+    var unitPrice: Double
+    var currency: Currency
     
-    init(id: UUID = UUID(), name: String, monthlySales: [String: Int] = [:]) {
+    init(id: UUID = UUID(), name: String, monthlySales: [String: Int] = [:], unitPrice: Double = 0.0, currency: Currency = .usd) {
         self.id = id
         self.name = name
         self.monthlySales = monthlySales
         self.predictedDemand = [:]
         self.emoji = ProductItem.findEmoji(for: name)
+        self.unitPrice = unitPrice
+        self.currency = currency
     }
     
     private static let emojiDictionary: [String: String] = [
@@ -103,12 +107,38 @@ struct ProductItem: Identifiable, Codable, Hashable, Equatable {
     }
 }
 
+enum Currency: String, Codable, CaseIterable {
+    case usd = "USD"
+    case uah = "UAH"
+    
+    var symbol: String {
+        switch self {
+        case .usd: return "$"
+        case .uah: return "₴"
+        }
+    }
+    
+    var name: String {
+        switch self {
+        case .usd: return "US Dollar"
+        case .uah: return "Ukrainian Hryvnia"
+        }
+    }
+}
+
 class ProductManager: ObservableObject {
     @Published var products: [ProductItem] = []
     private let saveKey = "savedProducts"
+    private let hasInitializedKey = "hasInitializedProducts"
     
     init() {
         loadProducts()
+        
+        // Додаємо демонстраційні товари тільки при першому запуску
+        if UserDefaults.standard.bool(forKey: hasInitializedKey) == false {
+            addDemoProducts()
+            UserDefaults.standard.set(true, forKey: hasInitializedKey)
+        }
     }
     
     func addProduct(_ product: ProductItem) {
@@ -126,6 +156,63 @@ class ProductManager: ObservableObject {
             products[index] = product
             saveProducts()
         }
+    }
+    
+    private func addDemoProducts() {
+        let months = ["January", "February", "March", "April", "May", "June", 
+                     "July", "August", "September", "October", "November", "December"]
+        
+        // Демо-товар 1: Яблука
+        var appleSales: [String: Int] = [:]
+        for (index, month) in months.enumerated() {
+            // Зимою і восени більше продажі
+            if index < 2 || index > 8 {
+                appleSales[month] = Int.random(in: 500...800)
+            } else {
+                appleSales[month] = Int.random(in: 200...500)
+            }
+        }
+        
+        let apple = ProductItem(
+            name: "Apples", 
+            monthlySales: appleSales, 
+            unitPrice: 1.25, 
+            currency: .usd
+        )
+        
+        // Демо-товар 2: Банани
+        var bananaSales: [String: Int] = [:]
+        for month in months {
+            bananaSales[month] = Int.random(in: 300...700)
+        }
+        
+        let banana = ProductItem(
+            name: "Bananas", 
+            monthlySales: bananaSales, 
+            unitPrice: 0.89, 
+            currency: .usd
+        )
+        
+        // Демо-товар 3: Молоко
+        var milkSales: [String: Int] = [:]
+        for month in months {
+            milkSales[month] = Int.random(in: 800...1200)
+        }
+        
+        let milk = ProductItem(
+            name: "Milk", 
+            monthlySales: milkSales, 
+            unitPrice: 2.49, 
+            currency: .usd
+        )
+        
+        // Додаємо демо-товари
+        products.append(apple)
+        products.append(banana)
+        products.append(milk)
+        
+        // Зберігаємо до UserDefaults
+        saveProducts()
     }
     
     func predictDemand(for product: ProductItem) -> [String: Int] {

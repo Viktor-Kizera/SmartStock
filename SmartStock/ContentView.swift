@@ -8,7 +8,13 @@
 import SwiftUI
 import Charts
 
+// Оголошуємо екземпляр ProductManager на рівні програми для спільного доступу
+class AppState: ObservableObject {
+    @Published var productManager = ProductManager()
+}
+
 struct ContentView: View {
+    @StateObject private var appState = AppState()
     @State private var selectedTab: Tab = .home
     
     var body: some View {
@@ -295,6 +301,7 @@ struct ContentView: View {
                 
                 NavigationStack {
                     ProductsView()
+                        .environmentObject(appState.productManager)
                 }
                 .tag(Tab.products)
                 
@@ -324,7 +331,8 @@ struct HomeView: View {
 }
 
 struct ProductsView: View {
-    @StateObject private var productManager = ProductManager()
+    // Використовуємо спільний екземпляр ProductManager
+    @EnvironmentObject var productManager: ProductManager
     @State private var searchText = ""
     @State private var showingAddProduct = false
     @State private var selectedProduct: ProductItem?
@@ -402,8 +410,8 @@ struct ProductsView: View {
                             .font(.system(size: 40))
                             .foregroundColor(.gray)
                         Text("No products found")
-                            .font(.headline)
-                            .foregroundColor(.gray)
+                .font(.headline)
+                .foregroundColor(.gray)
                         Text("Try adjusting your search or add a new product")
                             .font(.subheadline)
                             .foregroundColor(.gray.opacity(0.8))
@@ -428,10 +436,10 @@ struct ProductsView: View {
         }
         .background(Color(uiColor: .systemGray6))
         .sheet(isPresented: $showingAddProduct) {
-            AddProductView(productManager: productManager)
+            AddProductView()
         }
         .sheet(item: $selectedProduct) { product in
-            ProductDetailView(product: product, productManager: productManager)
+            ProductDetailView(product: product)
         }
     }
 }
@@ -440,6 +448,7 @@ struct ProductCard: View {
     let product: ProductItem
     let onTap: () -> Void
     let onDelete: () -> Void
+    @State private var showDeleteAlert = false
     
     var body: some View {
         HStack(spacing: 16) {
@@ -457,6 +466,12 @@ struct ProductCard: View {
                 Text("Total sales: \(totalSales) units")
                     .font(.subheadline)
                     .foregroundColor(.gray)
+                
+                if product.unitPrice > 0 {
+                    Text("\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice))/unit")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
             }
             
             Spacer()
@@ -469,12 +484,20 @@ struct ProductCard: View {
                     .cornerRadius(8)
             }
             
-            Button(action: onDelete) {
+            Button(action: { showDeleteAlert = true }) {
                 Image(systemName: "trash")
                     .foregroundColor(.red)
                     .padding(8)
                     .background(Color.red.opacity(0.1))
                     .cornerRadius(8)
+            }
+            .alert(isPresented: $showDeleteAlert) {
+                Alert(
+                    title: Text("Delete product?"),
+                    message: Text("Are you sure you want to delete this product?"),
+                    primaryButton: .destructive(Text("Yes"), action: onDelete),
+                    secondaryButton: .cancel(Text("No"))
+                )
             }
         }
         .padding()
@@ -485,9 +508,11 @@ struct ProductCard: View {
 
 struct AddProductView: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var productManager: ProductManager
+    @EnvironmentObject var productManager: ProductManager
     @State private var productName = ""
     @State private var monthlySales: [String: Int] = [:]
+    @State private var unitPrice: Double = 0.0
+    @State private var selectedCurrency: Currency = .usd
     
     private let months = ["January", "February", "March", "April", "May", "June", 
                          "July", "August", "September", "October", "November", "December"]
@@ -496,49 +521,142 @@ struct AddProductView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    TextField("Product Name", text: $productName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                    
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Monthly Sales Data (2024)")
+                    // Product Name Field
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Product Name")
                             .font(.headline)
-                            .padding(.horizontal)
+                            .foregroundColor(.gray)
                         
+                        TextField("Product Name", text: $productName)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+                    .padding(.horizontal)
+                    
+                    // Price Field and Currency
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Price")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        
+                        HStack(spacing: 12) {
+                            // Price input
+                            HStack {
+                                Text(selectedCurrency.symbol)
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                ZStack(alignment: .leading) {
+                                    if unitPrice == 0 {
+                                        Text("0.00")
+                                            .foregroundColor(.gray.opacity(0.5))
+                                    }
+                                    
+                                    TextField("", value: $unitPrice, formatter: priceFormatter())
+                                        .keyboardType(.decimalPad)
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            .frame(maxWidth: .infinity)
+                            
+                            // Currency selector
+                            Picker("", selection: $selectedCurrency) {
+                                ForEach(Currency.allCases, id: \.self) { currency in
+                                    Text(currency.symbol).tag(currency)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .frame(width: 80)
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    // Monthly Sales Section
+        VStack(alignment: .leading, spacing: 16) {
+                        Text("Monthly Sales Data (2024)")
+                .font(.headline)
+                .foregroundColor(.gray)
+                            .padding(.horizontal)
+            
                         VStack(spacing: 16) {
                             ForEach(months, id: \.self) { month in
-                                HStack {
-                                    Text(month)
-                                        .font(.subheadline)
-                                    
-                                    Spacer()
-                                    
+                    HStack {
+                                    // Назва місяця зліва
+                        Text(month)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.black)
+                            .frame(width: 100, alignment: .leading)
+                        
+                        Spacer()
+                        
+                                    // Контроли редагування кількості
                                     HStack(spacing: 12) {
-                                        Button(action: {
+                            Button(action: {
                                             monthlySales[month] = max(0, (monthlySales[month] ?? 0) - 1)
-                                        }) {
-                                            Image(systemName: "minus.circle.fill")
+                            }) {
+                                Image(systemName: "minus.circle.fill")
                                                 .foregroundColor(.red)
+                                                .font(.system(size: 26))
+                            }
+                            
+                                        ZStack(alignment: .center) {
+                                            // Використовуємо простіший підхід
+                                            TextField("0", text: Binding(
+                                                get: { 
+                                                    if let sales = monthlySales[month], sales > 0 {
+                                                        return "\(sales)"
+                                                    } else {
+                                                        return ""
+                                                    }
+                                                },
+                                                set: { 
+                                                    if let value = Int($0) {
+                                                        monthlySales[month] = value
+                                                    } else {
+                                                        monthlySales[month] = 0
+                                                    }
+                                                }
+                                            ))
+                                .multilineTextAlignment(.center)
+                                            .keyboardType(.numberPad)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .frame(width: 60)
+                                            .background(Color(.systemBackground))
+                                            .cornerRadius(8)
                                         }
-                                        
-                                        Text("\(monthlySales[month] ?? 0)")
-                                            .frame(width: 40)
-                                        
-                                        Button(action: {
+                            
+                            Button(action: {
                                             monthlySales[month] = (monthlySales[month] ?? 0) + 1
-                                        }) {
-                                            Image(systemName: "plus.circle.fill")
+                            }) {
+                                Image(systemName: "plus.circle.fill")
                                                 .foregroundColor(.green)
+                                                .font(.system(size: 26))
                                         }
                                     }
+                                    
+                                    // Units справа
+                                    Text("units")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gray)
+                                        .frame(width: 40, alignment: .trailing)
                                 }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(12)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                                )
+                            }
                             }
                         }
                     }
-                }
                 .padding()
             }
             .navigationTitle("Add New Product")
@@ -552,7 +670,12 @@ struct AddProductView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        let newProduct = ProductItem(name: productName, monthlySales: monthlySales)
+                        let newProduct = ProductItem(
+                            name: productName, 
+                            monthlySales: monthlySales, 
+                            unitPrice: unitPrice,
+                            currency: selectedCurrency
+                        )
                         productManager.addProduct(newProduct)
                         dismiss()
                     }
@@ -561,11 +684,19 @@ struct AddProductView: View {
             }
         }
     }
+    
+    private func priceFormatter() -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter
+    }
 }
 
 struct ProductDetailView: View {
     let product: ProductItem
-    @ObservedObject var productManager: ProductManager
+    @EnvironmentObject var productManager: ProductManager
     @Environment(\.dismiss) var dismiss
     @State private var predictedDemand: [String: Int] = [:]
     
@@ -584,6 +715,10 @@ struct ProductDetailView: View {
         product.monthlySales.max { $0.value < $1.value } ?? ("N/A", 0)
     }
     
+    private var totalRevenue: Double {
+        Double(totalYearlyDemand) * product.unitPrice
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -597,14 +732,22 @@ struct ProductDetailView: View {
                                 .background(Color.white)
                                 .cornerRadius(16)
                             
-                            Text(product.name)
-                                .font(.system(size: 34, weight: .bold))
-                                .foregroundColor(.primary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(product.name)
+                                    .font(.system(size: 34, weight: .bold))
+                                    .foregroundColor(.primary)
+                                
+                                if product.unitPrice > 0 {
+                                    Text("\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice)) per unit")
+                                        .font(.headline)
+                                        .foregroundColor(.blue)
+                }
+            }
                             
                             Spacer()
-                        }
-                        .padding()
-                        .background(Color.white)
+        }
+        .padding()
+        .background(Color.white)
                         .cornerRadius(16)
                     }
                     .cornerRadius(16)
@@ -649,6 +792,26 @@ struct ProductDetailView: View {
                             .padding()
                             .background(Color.green.opacity(0.1))
                             .cornerRadius(16)
+    }
+    
+                        if product.unitPrice > 0 {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Projected Revenue")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                Text("\(product.currency.symbol)\(String(format: "%.2f", totalRevenue))")
+                                    .font(.system(size: 34, weight: .bold))
+                                    .foregroundColor(.blue)
+                                
+                                Text("based on current unit price")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(16)
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -684,7 +847,7 @@ struct ProductDetailView: View {
                     // Sales Performance Block
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Sales Performance")
-                            .font(.headline)
+                    .font(.headline)
                         
                         Chart {
                             ForEach(months, id: \.self) { month in
@@ -704,7 +867,7 @@ struct ProductDetailView: View {
                     // Quarterly Forecast Block
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Quarterly Forecast")
-                            .font(.headline)
+                    .font(.headline)
                         
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                             ForEach(0..<4) { quarter in
@@ -763,7 +926,7 @@ struct ProductDetailView: View {
             .navigationBarHidden(true)
             .onAppear {
                 predictedDemand = productManager.predictDemand(for: product)
-            }
+    }
         }
     }
 }
@@ -984,4 +1147,17 @@ struct SettingsToggleRow: View {
 
 #Preview {
     ContentView()
+}
+
+extension View {
+    func placeholder<Content: View>(
+        when shouldShow: Bool,
+        alignment: Alignment = .leading,
+        @ViewBuilder placeholder: () -> Content) -> some View {
+        
+        ZStack(alignment: alignment) {
+            placeholder().opacity(shouldShow ? 1 : 0)
+            self
+        }
+    }
 }
