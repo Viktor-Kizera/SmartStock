@@ -16,6 +16,7 @@ class AppState: ObservableObject {
 struct ContentView: View {
     @StateObject private var appState = AppState()
     @State private var selectedTab: Tab = .home
+    @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisMonth
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -52,9 +53,11 @@ struct ContentView: View {
                                 Spacer()
                                 
                                 Menu {
-                                    Button("This Month", action: {})
-                                    Button("Last Month", action: {})
-                                    Button("Last 3 Months", action: {})
+                                    ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                        Button(period.title) {
+                                            selectedAnalyticsPeriod = period
+                                        }
+                                    }
                                 } label: {
                                     Image(systemName: "chevron.down")
                                         .foregroundColor(.gray)
@@ -82,14 +85,16 @@ struct ContentView: View {
                             
                             // Період фільтрів
                             HStack(spacing: 12) {
-                                ForEach(["This Month", "Last Month", "Last 3 Months"], id: \.self) { period in
-                                    Button(action: {}) {
-                                        Text(period)
+                                ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                    Button(action: {
+                                        selectedAnalyticsPeriod = period
+                                    }) {
+                                        Text(period.title)
                                             .font(.subheadline)
                                             .padding(.horizontal, 16)
                                             .padding(.vertical, 8)
-                                            .background(period == "This Month" ? Color.blue : Color.gray.opacity(0.1))
-                                            .foregroundColor(period == "This Month" ? .white : .gray)
+                                            .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
+                                            .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
                                             .cornerRadius(20)
                                     }
                                 }
@@ -1161,4 +1166,12 @@ extension View {
             self
         }
     }
+}
+
+enum AnalyticsPeriod: String, CaseIterable, Equatable {
+    case thisMonth = "This Month"
+    case lastMonth = "Last Month"
+    case last3Months = "Last 3 Months"
+    
+    var title: String { self.rawValue }
 }
