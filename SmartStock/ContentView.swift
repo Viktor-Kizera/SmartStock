@@ -40,9 +40,9 @@ struct ContentView: View {
                                 AIInsightsView()
                                 QuickActionsView()
                                 RecentProductsView()
-                            }
-                        }
-                        .padding(.horizontal)
+                    }
+                }
+                .padding(.horizontal)
                         .padding(.bottom, 90)
                     }
                     .background(Color(uiColor: .systemGray6))
@@ -119,113 +119,12 @@ struct ContentView: View {
                                 .environmentObject(appState.productManager)
                             
                             // Top Products
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    Text("Top Products")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                    
-                                    Spacer()
-                                    
-                                    Button("View All") {
-                                        // Action
-                                    }
-                                    .foregroundColor(.blue)
-                                }
-                                
-                                HStack(spacing: 12) {
-                                    // Product 1
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.gray.opacity(0.1))
-                                            .frame(width: 50, height: 50)
-                                        
-                                        Text("Product Name")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                        
-                                        Text("1,234 units sold")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                        
-                                        Text("In Stock")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.green.opacity(0.1))
-                                            .foregroundColor(.green)
-                                            .cornerRadius(12)
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(16)
-                                    
-                                    // Product 2
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.gray.opacity(0.1))
-                                            .frame(width: 50, height: 50)
-                                        
-                                        Text("Product Name")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                        
-                                        Text("987 units sold")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                        
-                                        Text("Low Stock")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.orange.opacity(0.1))
-                                            .foregroundColor(.orange)
-                                            .cornerRadius(12)
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(16)
-                                }
-                            }
+                            TopProductsView()
+                                .environmentObject(appState.productManager)
                             
                             // Low Stock Alerts
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    Text("Low Stock Alerts")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                    
-                                    Spacer()
-                                    
-                                    Button("View All") {
-                                        // Action
-                                    }
-                                    .foregroundColor(.blue)
-                                }
-                                
-                                VStack(spacing: 12) {
-                                    ForEach(["Product Name", "Product Name"], id: \.self) { product in
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text(product)
-                                                    .font(.subheadline)
-                                                    .fontWeight(.medium)
-                                                Text("Only \(product == "Product Name" ? "5" : "8") units left")
-                                                    .font(.caption)
-                                                    .foregroundColor(.red)
-                                            }
-                                            
-                                            Spacer()
-                                            
-                                            Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
-                                        }
-                                        .padding()
-                                        .background(Color.red.opacity(0.05))
-                                        .cornerRadius(12)
-                                    }
-                                }
-                            }
+                            LowStockAlertsView()
+                                .environmentObject(appState.productManager)
                         }
                         .padding()
                         .padding(.bottom, 90)
@@ -519,8 +418,8 @@ struct AddProductView: View {
                             .foregroundColor(.gray)
                         
                         TextField("Product Name", text: $productName)
-                            .padding()
-                            .background(Color.white)
+        .padding()
+        .background(Color.white)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
@@ -745,7 +644,7 @@ struct ProductDetailView: View {
                     // Forecast Stats Block
                     VStack(spacing: 16) {
                         Text("Total Forecast for Next Year")
-                            .font(.headline)
+                    .font(.headline)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         HStack(spacing: 16) {
@@ -850,7 +749,7 @@ struct ProductDetailView: View {
                         }
                         .frame(height: 200)
                     }
-                    .padding()
+            .padding()
                     .background(Color(uiColor: .systemGray6))
                     .cornerRadius(16)
                     
@@ -965,7 +864,7 @@ struct SettingsView: View {
                     ZStack {
                         Circle()
                             .fill(
-                                LinearGradient(
+                LinearGradient(
                                     colors: [Color(hex: "FF6B6B"), Color(hex: "FF8E8E")],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -975,7 +874,7 @@ struct SettingsView: View {
                         
                         Text("VK")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+            .foregroundColor(.white)
                     }
                     .shadow(color: Color(hex: "FF6B6B").opacity(0.3), radius: 8, x: 0, y: 4)
                 }
@@ -983,7 +882,7 @@ struct SettingsView: View {
                 // Profile Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Profile")
-                        .font(.headline)
+                    .font(.headline)
                     
                     VStack(spacing: 12) {
                         SettingsRow(icon: "person.fill", title: "Account", subtitle: "Viktor Kizera")
@@ -1044,14 +943,14 @@ struct SettingsView: View {
                 HStack {
                     Text("Version 1.0.0")
                         .font(.footnote)
-                        .foregroundColor(.gray)
-                    
+                    .foregroundColor(.gray)
+                
                     Spacer()
                     
                     Button(action: {}) {
                         Text("Check for Updates")
                             .font(.footnote)
-                            .foregroundColor(.blue)
+                        .foregroundColor(.blue)
                     }
                 }
                 .padding(.top, 8)
@@ -1079,13 +978,13 @@ struct SettingsRow: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.subheadline)
+                        .font(.subheadline)
                     .fontWeight(.medium)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(.gray)
-            }
+                        .foregroundColor(.gray)
+                }
             
             Spacer()
             
@@ -1093,7 +992,7 @@ struct SettingsRow: View {
                 .font(.system(size: 14))
                 .foregroundColor(.gray)
         }
-        .padding()
+                .padding()
         .background(Color(uiColor: .systemGray6))
         .cornerRadius(12)
     }
@@ -1114,14 +1013,14 @@ struct SettingsToggleRow: View {
                 .background(Color.blue.opacity(0.1))
                 .cornerRadius(8)
             
-            VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                        .foregroundColor(.gray)
             }
             
             Spacer()
@@ -1153,7 +1052,7 @@ struct AnalyticsStatsView: View {
                 Spacer(minLength: 8)
                 Image(systemName: "cube.box.fill")
                     .font(.system(size: 28))
-                    .foregroundColor(.blue)
+                        .foregroundColor(.blue)
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(Color.blue.opacity(0.12)))
                 Text("Total Products")
@@ -1267,7 +1166,7 @@ struct SalesPerformanceView: View {
                         let logValue = logData[idx]
                         VStack(spacing: 0) {
                             Text(formattedValue(value))
-                                .font(.caption2)
+                                    .font(.caption2)
                                 .foregroundColor(chartColor)
                                 .frame(height: 16)
                             RoundedRectangle(cornerRadius: 4)
@@ -1277,7 +1176,7 @@ struct SalesPerformanceView: View {
                                     height: value > 0 && maxLog > 0 ? max(8, CGFloat(logValue) / CGFloat(maxLog) * chartHeight) : 8
                                 )
                             Text(months[idx].prefix(3))
-                                .font(.caption2)
+                                    .font(.caption2)
                                 .foregroundColor(.gray)
                                 .frame(width: barWidth, height: 36, alignment: .center)
                                 .rotationEffect(.degrees(-45))
@@ -1289,9 +1188,9 @@ struct SalesPerformanceView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             }
             .frame(height: 300)
-        }
-        .padding()
-        .background(Color.white)
+            }
+            .padding()
+            .background(Color.white)
         .cornerRadius(16)
     }
 }
@@ -1311,8 +1210,8 @@ struct EditProductView: View {
                             .font(.headline)
                             .foregroundColor(.gray)
                         TextField("Product Name", text: $product.name)
-                            .padding()
-                            .background(Color.white)
+        .padding()
+        .background(Color.white)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                     }
@@ -1330,7 +1229,7 @@ struct EditProductView: View {
                                     .keyboardType(.decimalPad)
                                 Spacer()
                             }
-                            .padding()
+            .padding()
                             .background(Color.white)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
@@ -1412,7 +1311,7 @@ struct EditProductView: View {
                             }
                         }
                     }
-                    .padding()
+            .padding()
                 }
             }
             .navigationTitle("Edit Product")
@@ -1438,6 +1337,232 @@ struct EditProductView: View {
         formatter.minimumFractionDigits = 2
         formatter.maximumFractionDigits = 2
         return formatter
+    }
+}
+
+struct TopProductsView: View {
+    @EnvironmentObject var productManager: ProductManager
+    @State private var showAll = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Top Products")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Spacer()
+                Button("View All") {
+                    showAll = true
+                }
+                .foregroundColor(.blue)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(productManager.products) { product in
+                        TopProductCard(product: product)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .sheet(isPresented: $showAll) {
+            TopProductsListView()
+                .environmentObject(productManager)
+        }
+    }
+}
+
+struct TopProductCard: View {
+    let product: ProductItem
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    var status: (String, Color) {
+        if totalSales > 500 {
+            return ("High", Color.green)
+        } else if totalSales >= 50 {
+            return ("Medium", Color.yellow)
+        } else {
+            return ("Low", Color.red)
+        }
+    }
+    var body: some View {
+        VStack(spacing: 10) {
+            Text(product.emoji)
+                .font(.system(size: 36))
+                .frame(width: 50, height: 50)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+            Text(product.name)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .frame(maxWidth: 90)
+            Text("\(totalSales.formatted(.number.grouping(.automatic))) units sold")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            Text(status.0)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(status.1.opacity(0.12))
+                .foregroundColor(status.1)
+                .cornerRadius(12)
+        }
+        .frame(width: 120, height: 160)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+    }
+}
+
+struct TopProductsListView: View {
+    @EnvironmentObject var productManager: ProductManager
+    @Environment(\.dismiss) var dismiss
+    var body: some View {
+        NavigationView {
+            List(productManager.products) { product in
+                TopProductListRow(product: product)
+            }
+            .listStyle(.plain)
+            .navigationTitle("All Products")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct TopProductListRow: View {
+    let product: ProductItem
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    var status: (String, Color) {
+        if totalSales > 500 {
+            return ("High", Color.green)
+        } else if totalSales >= 50 {
+            return ("Medium", Color.yellow)
+        } else {
+            return ("Low", Color.red)
+        }
+    }
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(product.emoji)
+                .font(.system(size: 32))
+                .frame(width: 44, height: 44)
+                .background(Color.gray.opacity(0.1))
+            .cornerRadius(10)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.headline)
+                Text("\(totalSales.formatted(.number.grouping(.automatic))) units sold")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
+            Spacer()
+            Text(status.0)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(status.1.opacity(0.12))
+                .foregroundColor(status.1)
+                .cornerRadius(12)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct LowStockAlertsView: View {
+    @EnvironmentObject var productManager: ProductManager
+    @State private var showAll = false
+    @State private var selectedProduct: ProductItem? = nil
+    var lowStockProducts: [ProductItem] {
+        productManager.products.filter { $0.monthlySales.values.reduce(0, +) < 10 }
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Low Stock Alerts")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Spacer()
+                Button("View All") {
+                    showAll = true
+                }
+                .foregroundColor(.blue)
+            }
+            VStack(spacing: 12) {
+                ForEach(lowStockProducts) { product in
+                    Button(action: { selectedProduct = product }) {
+                        LowStockAlertRow(product: product)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .sheet(isPresented: $showAll) {
+            LowStockAlertsListView(products: lowStockProducts)
+        }
+        .sheet(item: $selectedProduct) { product in
+            ProductDetailView(product: product)
+                .environmentObject(productManager)
+        }
+    }
+}
+
+struct LowStockAlertRow: View {
+    let product: ProductItem
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(product.emoji)
+                .font(.system(size: 36))
+                .frame(width: 50, height: 50)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(product.name)
+                    .font(.headline)
+                    .fontWeight(.medium)
+                Text("Only sold \(totalSales) units")
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
+                .font(.system(size: 20, weight: .semibold))
+        }
+        .padding(18)
+        .background(Color.red.opacity(0.07))
+        .cornerRadius(20)
+    }
+}
+
+struct LowStockAlertsListView: View {
+    let products: [ProductItem]
+    @Environment(\.dismiss) var dismiss
+    @State private var selectedProduct: ProductItem? = nil
+    var body: some View {
+        NavigationView {
+            List(products) { product in
+                Button(action: { selectedProduct = product }) {
+                    LowStockAlertRow(product: product)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .listStyle(.plain)
+            .navigationTitle("Low Stock Alerts")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .sheet(item: $selectedProduct) { product in
+                ProductDetailView(product: product)
+            }
+        }
     }
 }
 
