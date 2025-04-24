@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct SmartStockApp: App {
+    @StateObject var productManager = ProductManager()
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(productManager)
         }
     }
 }

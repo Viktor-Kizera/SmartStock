@@ -13,16 +13,38 @@ class AppState: ObservableObject {
     @Published var productManager = ProductManager()
 }
 
+enum AnalyticsPeriod: String, CaseIterable, Equatable {
+    case thisMonth = "This Month"
+    case lastMonth = "Last Month"
+    case last3Months = "Last 3 Months"
+    
+    var title: String { self.rawValue }
+}
+
 struct ContentView: View {
     @StateObject private var appState = AppState()
     @State private var selectedTab: Tab = .home
     @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisMonth
     
+    var totalProducts: Int {
+        appState.productManager.products.reduce(0) { $0 + $1.monthlySales.values.reduce(0, +) }
+    }
+    
+    var stockValue: Double {
+        appState.productManager.products.reduce(0) { $0 + Double($1.monthlySales.values.reduce(0, +)) * $1.unitPrice }
+    }
+    
+    var mainCurrencySymbol: String {
+        // Якщо всі товари в одній валюті — показуємо її, інакше $ за замовчуванням
+        let all = appState.productManager.products.map { $0.currency.symbol }
+        return Set(all).count == 1 ? (all.first ?? "$") : "$"
+    }
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
-                NavigationStack {
-                    ScrollView {
+        NavigationStack {
+            ScrollView {
                         VStack(spacing: 12) {
                             HeaderView()
                                 .padding(.top, 16)
@@ -108,17 +130,11 @@ struct ContentView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
                                     
-                                    Text("2,618")
+                                    Text("\(totalProducts.formatted(.number.grouping(.automatic)))")
                                         .font(.title)
                                         .fontWeight(.bold)
                                     
-                                    HStack {
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundColor(.green)
-                                        Text("12% vs last month")
-                                            .font(.caption)
-                                            .foregroundColor(.green)
-                                    }
+                                    // Можна додати динаміку, якщо потрібно
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -131,17 +147,9 @@ struct ContentView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
                                     
-                                    Text("$124.5k")
+                                    Text("\(mainCurrencySymbol)\(stockValue >= 1000 ? String(format: "%.1fk", stockValue/1000) : String(format: "%.2f", stockValue))")
                                         .font(.title)
                                         .fontWeight(.bold)
-                                    
-                                    HStack {
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundColor(.green)
-                                        Text("8% vs last month")
-                                            .font(.caption)
-                                            .foregroundColor(.green)
-                                    }
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1166,12 +1174,4 @@ extension View {
             self
         }
     }
-}
-
-enum AnalyticsPeriod: String, CaseIterable, Equatable {
-    case thisMonth = "This Month"
-    case lastMonth = "Last Month"
-    case last3Months = "Last 3 Months"
-    
-    var title: String { self.rawValue }
 }
