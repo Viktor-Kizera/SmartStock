@@ -464,10 +464,10 @@ struct AddProductView: View {
                                     }
                                     TextField("", text: $unitPriceText)
                                         .keyboardType(.decimalPad)
-                                        .onChange(of: unitPriceText) { newValue in
+                                        .onChange(of: unitPriceText) {
                                             // Очищення нецифрових символів
-                                            let filtered = newValue.filter { "0123456789.".contains($0) }
-                                            if filtered != newValue {
+                                            let filtered = unitPriceText.filter { "0123456789.".contains($0) }
+                                            if filtered != unitPriceText {
                                                 unitPriceText = filtered
                                             }
                                             // Оновлення Double
