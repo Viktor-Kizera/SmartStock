@@ -15,8 +15,9 @@ class AppState: ObservableObject {
 
 enum AnalyticsPeriod: String, CaseIterable, Equatable {
     case thisMonth = "This Month"
-    case lastMonth = "Last Month"
-    case last3Months = "Last 3 Months"
+    case threeMonths = "3 Months"
+    case sixMonths = "6 Months"
+    case thisYear = "This Year"
     
     var title: String { self.rawValue }
 }
@@ -24,7 +25,7 @@ enum AnalyticsPeriod: String, CaseIterable, Equatable {
 struct ContentView: View {
     @StateObject private var appState = AppState()
     @State private var selectedTab: Tab = .home
-    @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisMonth
+    @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisYear
     @State private var showSplash = true
     @State private var unitPrice: Double = 0.0
     @State private var unitPriceText: String = ""
@@ -103,23 +104,26 @@ struct ContentView: View {
                                     }
                                     
                                     // Період фільтрів
-                                    HStack(spacing: 12) {
-                                        ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
-                                            Button(action: {
-                                                selectedAnalyticsPeriod = period
-                                            }) {
-                                                Text(period.title)
-                                                    .font(.subheadline)
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding(.horizontal, 0)
-                                                    .padding(.vertical, 8)
-                                                    .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
-                                                    .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
-                                                    .cornerRadius(20)
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 12) {
+                                            ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                                                Button(action: {
+                                                    if selectedAnalyticsPeriod != period {
+                                                        selectedAnalyticsPeriod = period
+                                                    }
+                                                }) {
+                                                    Text(period.title)
+                                                        .font(.subheadline)
+                                                        .padding(.horizontal, 18)
+                                                        .padding(.vertical, 8)
+                                                        .background(selectedAnalyticsPeriod == period ? Color.blue : Color.gray.opacity(0.1))
+                                                        .foregroundColor(selectedAnalyticsPeriod == period ? .white : .gray)
+                                                        .cornerRadius(20)
+                                                }
                                             }
                                         }
+                                        .padding(.vertical, 2)
                                     }
-                                    .frame(maxWidth: .infinity)
                                     
                                     // Статистика
                                     AnalyticsStatsView()
@@ -1124,13 +1128,32 @@ struct SalesPerformanceView: View {
     @EnvironmentObject var productManager: ProductManager
     var selectedPeriod: AnalyticsPeriod
     @State private var selectedType: SalesType = .actual
-    
+
     enum SalesType: String, CaseIterable { case actual = "Actual", forecast = "Forecast" }
     
-    let months: [String] = [
+    let allMonths: [String] = [
         "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
     ]
     
+    // Обчислюємо місяці для графіка, починаючи з поточного
+    var months: [String] {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentMonthIndex = calendar.component(.month, from: now) - 1 // 0-based
+        let monthsCount: Int
+        switch selectedPeriod {
+        case .thisMonth: monthsCount = 1
+        case .threeMonths: monthsCount = 3
+        case .sixMonths: monthsCount = 6
+        case .thisYear: monthsCount = 12
+        }
+        var result: [String] = []
+        for i in 0..<monthsCount {
+            let idx = (currentMonthIndex + i) % 12
+            result.append(allMonths[idx])
+        }
+        return result
+    }
     // Сума продажів по кожному місяцю для всіх товарів
     var actualData: [Double] {
         months.map { month in
@@ -1182,37 +1205,70 @@ struct SalesPerformanceView: View {
             GeometryReader { geo in
                 let barCount = CGFloat(months.count)
                 let barSpacing: CGFloat = 8
-                let barWidth = max(18, (geo.size.width - barSpacing * (barCount - 1)) / barCount)
+                let barWidth: CGFloat = 28 // фіксована ширина для всіх режимів
                 let chartHeight = geo.size.height - 36
-                // Логарифмічне масштабування
                 let logData = chartData.map { $0 > 0 ? log10($0) : 0 }
                 let maxLog = logData.max() ?? 1
-                HStack(alignment: .bottom, spacing: barSpacing) {
-                    ForEach(0..<months.count, id: \.self) { idx in
-                        let value = chartData[idx]
-                        let logValue = logData[idx]
-                        VStack(spacing: 0) {
-                            Text(formattedValue(value))
-                                    .font(.caption2)
-                                .foregroundColor(chartColor)
-                                .frame(height: 16)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(chartColor)
-                                .frame(
-                                    width: barWidth,
-                                    height: value > 0 && maxLog > 0 ? max(8, CGFloat(logValue) / CGFloat(maxLog) * chartHeight) : 8
-                                )
-                            Text(months[idx].prefix(3))
-                                    .font(.caption2)
-                                .foregroundColor(.gray)
-                                .frame(width: barWidth, height: 36, alignment: .center)
-                                .rotationEffect(.degrees(-45))
-                                .lineLimit(1)
+                Group {
+                    if months.count > 6 {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(alignment: .bottom, spacing: barSpacing) {
+                                ForEach(0..<months.count, id: \.self) { idx in
+                                    let value = chartData[idx]
+                                    let logValue = logData[idx]
+                                    VStack(spacing: 0) {
+                                        Text(formattedValue(value))
+                                            .font(.caption2)
+                                            .foregroundColor(chartColor)
+                                            .frame(height: 16)
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(chartColor)
+                                            .frame(
+                                                width: barWidth,
+                                                height: value > 0 && maxLog > 0 ? max(8, CGFloat(logValue) / CGFloat(maxLog) * chartHeight) : 8
+                                            )
+                                        Text(months[idx].prefix(3))
+                                            .font(.caption2)
+                                            .foregroundColor(.gray)
+                                            .frame(width: barWidth, height: 36, alignment: .center)
+                                            .rotationEffect(.degrees(-45))
+                                            .lineLimit(1)
+                                    }
+                                    .frame(width: barWidth, alignment: .bottom)
+                                }
+                            }
+                            .padding(.horizontal, 8)
+                            .frame(height: geo.size.height)
                         }
-                        .frame(width: barWidth, alignment: .bottom)
+                    } else {
+                        HStack(alignment: .bottom, spacing: barSpacing) {
+                            ForEach(0..<months.count, id: \.self) { idx in
+                                let value = chartData[idx]
+                                let logValue = logData[idx]
+                                VStack(spacing: 0) {
+                                    Text(formattedValue(value))
+                                        .font(.caption2)
+                                        .foregroundColor(chartColor)
+                                        .frame(height: 16)
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(chartColor)
+                                        .frame(
+                                            width: barWidth,
+                                            height: value > 0 && maxLog > 0 ? max(8, CGFloat(logValue) / CGFloat(maxLog) * chartHeight) : 8
+                                        )
+                                    Text(months[idx].prefix(3))
+                                        .font(.caption2)
+                                        .foregroundColor(.gray)
+                                        .frame(width: barWidth, height: 36, alignment: .center)
+                                        .rotationEffect(.degrees(-45))
+                                        .lineLimit(1)
+                                }
+                                .frame(width: barWidth, alignment: .bottom)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             }
             .frame(height: 300)
             }
