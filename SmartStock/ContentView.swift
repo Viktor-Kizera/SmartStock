@@ -26,6 +26,8 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .home
     @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisMonth
     @State private var showSplash = true
+    @State private var unitPrice: Double = 0.0
+    @State private var unitPriceText: String = ""
     
     var body: some View {
         ZStack {
@@ -420,6 +422,7 @@ struct AddProductView: View {
     @State private var productName = ""
     @State private var monthlySales: [String: Int] = [:]
     @State private var unitPrice: Double = 0.0
+    @State private var unitPriceText: String = ""
     @State private var selectedCurrency: Currency = .usd
     
     private let months = ["January", "February", "March", "April", "May", "June", 
@@ -448,24 +451,29 @@ struct AddProductView: View {
                         Text("Price")
                             .font(.headline)
                             .foregroundColor(.gray)
-                        
                         HStack(spacing: 12) {
                             // Price input
                             HStack {
                                 Text(selectedCurrency.symbol)
                                     .font(.headline)
                                     .foregroundColor(.gray)
-                                
                                 ZStack(alignment: .leading) {
-                                    if unitPrice == 0 {
+                                    if unitPriceText.isEmpty {
                                         Text("0.00")
                                             .foregroundColor(.gray.opacity(0.5))
                                     }
-                                    
-                                    TextField("", value: $unitPrice, formatter: priceFormatter())
+                                    TextField("", text: $unitPriceText)
                                         .keyboardType(.decimalPad)
+                                        .onChange(of: unitPriceText) {
+                                            // Очищення нецифрових символів
+                                            let filtered = unitPriceText.filter { "0123456789.".contains($0) }
+                                            if filtered != unitPriceText {
+                                                unitPriceText = filtered
+                                            }
+                                            // Оновлення Double
+                                            unitPrice = Double(unitPriceText) ?? 0.0
+                                        }
                                 }
-                                
                                 Spacer()
                             }
                             .padding()
@@ -552,7 +560,6 @@ struct AddProductView: View {
                                     // Units справа
                                     Text("units")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.gray)
                                 }
                                 .padding(12)
                                 .background(
@@ -571,6 +578,7 @@ struct AddProductView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
+                        unitPriceText = ""
                         dismiss()
                     }
                 }
@@ -584,6 +592,7 @@ struct AddProductView: View {
                             currency: selectedCurrency
                         )
                         productManager.addProduct(newProduct)
+                        unitPriceText = ""
                         dismiss()
                     }
                     .disabled(productName.isEmpty)
