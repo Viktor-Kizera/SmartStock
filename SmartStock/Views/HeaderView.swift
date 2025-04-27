@@ -4,6 +4,8 @@ struct HeaderView: View {
     @State private var isNotificationActive = false
     private let iconSize: CGFloat = 36
     private let spacing: CGFloat = 16
+    @State private var boxRotation: Double = 0
+    @State private var isBadgePulsing: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -18,6 +20,8 @@ struct HeaderView: View {
                         Image(systemName: "cube.box.fill")
                             .font(.system(size: 18))
                             .foregroundColor(.blue)
+                            .rotationEffect(.degrees(boxRotation))
+                            .animation(.easeInOut(duration: 0.7), value: boxRotation)
                     }
                     
                     Text("SmartStock")
@@ -43,8 +47,9 @@ struct HeaderView: View {
                             // Notification Badge
                             Circle()
                                 .fill(Color.red)
-                                .frame(width: 8, height: 8)
+                                .frame(width: isBadgePulsing ? 6 : 8, height: isBadgePulsing ? 6 : 8)
                                 .offset(x: 2, y: -2)
+                                .animation(.easeInOut(duration: 0.4), value: isBadgePulsing)
                         }
                     }
                     
@@ -73,6 +78,42 @@ struct HeaderView: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
+        .onAppear {
+            func animateBox() {
+                let sequence: [Double] = [60, -45, 90, -60, 0]
+                var idx = 0
+                func next() {
+                    if idx < sequence.count {
+                        withAnimation(.easeInOut(duration: 0.7)) {
+                            boxRotation = sequence[idx]
+                        }
+                        idx += 1
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                            next()
+                        }
+                    }
+                }
+                next()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+                    animateBox()
+                }
+            }
+            animateBox()
+            func animateBadge() {
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    isBadgePulsing = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        isBadgePulsing = false
+                    }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 15) {
+                    animateBadge()
+                }
+            }
+            animateBadge()
+        }
     }
 }
 
