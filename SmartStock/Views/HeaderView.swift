@@ -109,21 +109,21 @@ struct HeaderView: View {
                     
                     // Profile Image
                     Button(action: { showSettings = true }) {
-                        AsyncImage(url: URL(string: "https://github.com/viktorkizera.png")) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Circle()
-                                .fill(Color(hex: "FF6B6B"))
-                                .overlay(
-                                    Text("VK")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white)
-                                )
-                        }
-                        .frame(width: 32, height: 32)
-                        .clipShape(Circle())
+                    AsyncImage(url: URL(string: "https://github.com/viktorkizera.png")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Circle()
+                            .fill(Color(hex: "FF6B6B"))
+                            .overlay(
+                                Text("VK")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white)
+                            )
+                    }
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
                     }
                     .buttonStyle(PlainButtonStyle())
                     .sheet(isPresented: $showSettings) {

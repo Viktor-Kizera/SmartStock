@@ -54,8 +54,9 @@ struct ContentView: View {
                                     
                                     VStack(spacing: 20) {
                                         InventoryHealthView()
+                                            .environmentObject(appState.productManager)
                                         AIInsightsView()
-                                        QuickActionsView()
+                                        QuickActionsView(onAnalytics: { selectedTab = .analytics })
                                         RecentProductsView()
                                     }
                                 }
@@ -190,9 +191,12 @@ struct ContentView: View {
 
 // Тимчасові заглушки для інших екранів
 struct HomeView: View {
+    @EnvironmentObject var productManager: ProductManager
+
     var body: some View {
         VStack(spacing: 20) {
             InventoryHealthView()
+                .environmentObject(productManager)
             AIInsightsView()
             QuickActionsView()
             RecentProductsView()
