@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct QuickActionsView: View {
+    @EnvironmentObject var notificationManager: NotificationManager
+    @EnvironmentObject var productManager: ProductManager
+    @EnvironmentObject var tabRouter: TabRouter
     @State private var showAddProduct = false
     @State private var showScanner = false
     @State private var showShareSheet = false
-    var onAnalytics: (() -> Void)? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -20,19 +22,19 @@ struct QuickActionsView: View {
                     title: "Add Product",
                     action: { showAddProduct = true }
                 )
-                
                 QuickActionButton(
                     icon: "barcode.viewfinder",
                     title: "Scan Item",
                     action: { showScanner = true }
                 )
-                
                 QuickActionButton(
                     icon: "chart.bar",
                     title: "Analytics",
-                    action: { onAnalytics?() }
+                    action: {
+                        tabRouter.selectedTab = .analytics
+                        tabRouter.scrollToSalesPerformance.toggle()
+                    }
                 )
-                
                 QuickActionButton(
                     icon: "square.and.arrow.up",
                     title: "Export Data",
@@ -45,13 +47,51 @@ struct QuickActionsView: View {
         .cornerRadius(12)
         .sheet(isPresented: $showAddProduct) {
             AddProductView()
+                .environmentObject(productManager)
+                .environmentObject(notificationManager)
         }
         .sheet(isPresented: $showScanner) {
-            ScannerPlaceholderView()
+            QRScannerPlaceholder()
         }
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(activityItems: ["Exported SmartStock data (placeholder)"])
+            ShareSheetPlaceholder()
         }
+    }
+}
+
+struct QRScannerPlaceholder: View {
+    @Environment(\.dismiss) var dismiss
+    var body: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "qrcode.viewfinder")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .foregroundColor(.blue)
+            Text("QR Code Scanner Coming Soon")
+                .font(.headline)
+            Button("Close") { dismiss() }
+                .padding(.top, 16)
+        }
+        .padding()
+    }
+}
+
+struct ShareSheetPlaceholder: View {
+    @Environment(\.dismiss) var dismiss
+    var body: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "square.and.arrow.up")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .foregroundColor(.blue)
+            Text("Export/Share Data Coming Soon")
+                .font(.headline)
+            Button("Close") { dismiss() }
+                .padding(.top, 16)
+        }
+        .padding()
     }
 }
 
@@ -79,36 +119,11 @@ struct QuickActionButton: View {
     }
 }
 
-struct ScannerPlaceholderView: View {
-    @Environment(\.dismiss) var dismiss
-    var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "qrcode.viewfinder")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 100, height: 100)
-                .foregroundColor(.blue)
-            Text("QR Code Scanner Coming Soon")
-                .font(.title3)
-                .foregroundColor(.gray)
-            Button("Close") { dismiss() }
-                .padding()
-        }
-        .padding()
-    }
-}
-
-struct ShareSheet: UIViewControllerRepresentable {
-    var activityItems: [Any]
-    var applicationActivities: [UIActivity]? = nil
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
-    }
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
 #Preview {
     QuickActionsView()
+        .environmentObject(ProductManager())
+        .environmentObject(NotificationManager())
+        .environmentObject(TabRouter())
         .padding()
         .background(Color.gray.opacity(0.1))
 } 

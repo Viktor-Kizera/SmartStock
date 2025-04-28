@@ -32,32 +32,35 @@ enum StockStatus {
 }
 
 struct RecentProductsView: View {
-    let products: [Product] = [
-        Product(name: "Wireless Headphones", sku: "#WH7845", units: 234, status: .inStock, icon: "headphones"),
-        Product(name: "Smart Watch X2", sku: "#SW2346", units: 45, status: .lowStock, icon: "applewatch"),
-        Product(name: "Pro Earbuds", sku: "#PE8921", units: 12, status: .criticalStock, icon: "airpodspro"),
-        Product(name: "Fast Charger Pro", sku: "#FC4432", units: 567, status: .inStock, icon: "bolt.fill"),
-        Product(name: "Premium Case", sku: "#PC1123", units: 89, status: .lowStock, icon: "iphone")
-    ]
+    @EnvironmentObject var productManager: ProductManager
+    
+    // Show up to 5 most recent products
+    var recentProducts: [ProductItem] {
+        productManager.products.suffix(5).reversed()
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Recent Products")
                     .font(.headline)
-                
                 Spacer()
-                
                 NavigationLink("See All") {
-                    // Destination view
+                    ProductsListView()
+                        .environmentObject(productManager)
                 }
                 .font(.subheadline)
                 .foregroundColor(.blue)
             }
-            
             VStack(spacing: 12) {
-                ForEach(products) { product in
-                    ProductRow(product: product)
+                ForEach(recentProducts) { product in
+                    ProductItemRow(product: product)
+                }
+                if recentProducts.isEmpty {
+                    Text("No products yet.")
+                        .foregroundColor(.gray)
+                        .font(.subheadline)
+                        .padding(.vertical, 16)
                 }
             }
         }
@@ -67,51 +70,70 @@ struct RecentProductsView: View {
     }
 }
 
-struct ProductRow: View {
-    let product: Product
+struct ProductItemRow: View {
+    let product: ProductItem
+    
+    var totalSales: Int { product.monthlySales.values.reduce(0, +) }
+    
+    var salesColor: Color {
+        switch totalSales {
+        case 100...100_000: return .green
+        case 50..<100: return .yellow
+        case 10..<50: return .purple
+        case 1..<10: return .red
+        default: return .gray
+        }
+    }
     
     var body: some View {
         HStack(spacing: 16) {
-            // Product Icon
-            Image(systemName: product.icon)
-                .font(.title2)
-                .foregroundColor(.gray)
-                .frame(width: 40, height: 40)
+            Text(product.emoji)
+                .font(.system(size: 32))
+                .frame(width: 44, height: 44)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
-            
-            // Product Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
-                Text(product.sku)
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                if product.unitPrice > 0 {
+                    Text("\(product.currency.symbol)\(String(format: "%.2f", product.unitPrice))/unit")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                }
             }
-            
             Spacer()
-            
-            // Units and Status
             VStack(alignment: .trailing, spacing: 4) {
-                Text("\(product.units) units")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(product.status.text)
+                Text("\(totalSales) units")
                     .font(.caption)
-                    .foregroundColor(product.status.color)
+                    .fontWeight(.medium)
+                    .foregroundColor(salesColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(salesColor, lineWidth: 1.2)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(salesColor.opacity(0.08)))
+                    )
             }
         }
-        .padding()
-        .background(Color.gray.opacity(0.05))
-        .cornerRadius(8)
+        .padding(.vertical, 4)
+    }
+}
+
+struct ProductsListView: View {
+    @EnvironmentObject var productManager: ProductManager
+    var body: some View {
+        List(productManager.products.reversed()) { product in
+            ProductItemRow(product: product)
+        }
+        .navigationTitle("All Products")
     }
 }
 
 #Preview {
     RecentProductsView()
+        .environmentObject(ProductManager())
         .padding()
         .background(Color.gray.opacity(0.1))
 } 

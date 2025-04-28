@@ -9,6 +9,7 @@ import SwiftUI
 import Charts
 import UserNotifications
 
+
 // Оголошуємо екземпляр ProductManager на рівні програми для спільного доступу
 class AppState: ObservableObject {
     @Published var productManager = ProductManager()
@@ -26,6 +27,7 @@ enum AnalyticsPeriod: String, CaseIterable, Equatable {
 struct ContentView: View {
     @StateObject private var appState = AppState()
     @StateObject private var notificationManager = NotificationManager()
+    @StateObject private var tabRouter = TabRouter()
     @State private var selectedTab: Tab = .home
     @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisYear
     @State private var showSplash = true
@@ -56,8 +58,12 @@ struct ContentView: View {
                                         InventoryHealthView()
                                             .environmentObject(appState.productManager)
                                         AIInsightsView()
-                                        QuickActionsView(onAnalytics: { selectedTab = .analytics })
+                                        QuickActionsView()
+                                            .environmentObject(appState.productManager)
+                                            .environmentObject(notificationManager)
+                                            .environmentObject(tabRouter)
                                         RecentProductsView()
+                                            .environmentObject(appState.productManager)
                                     }
                                 }
                                 .padding(.horizontal)
@@ -185,6 +191,10 @@ struct ContentView: View {
                     showSplash = false
                 }
             }
+        }
+        .onChange(of: tabRouter.scrollToSalesPerformance) { _ in
+            selectedTab = .analytics
+            selectedAnalyticsPeriod = .thisYear
         }
     }
 }
@@ -1755,6 +1765,9 @@ struct SplashView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(ProductManager())
+        .environmentObject(NotificationManager())
+        .environmentObject(TabRouter())
 }
 
 extension View {
