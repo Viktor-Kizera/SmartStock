@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HeaderView: View {
     @State private var isNotificationActive = false
+    @State private var showSettings = false
     private let iconSize: CGFloat = 36
     private let spacing: CGFloat = 16
     @State private var boxRotation: Double = 0
@@ -52,23 +53,32 @@ struct HeaderView: View {
                                 .animation(.easeInOut(duration: 0.4), value: isBadgePulsing)
                         }
                     }
+                    .sheet(isPresented: $isNotificationActive) {
+                        NotificationListView()
+                    }
                     
                     // Profile Image
-                    AsyncImage(url: URL(string: "https://github.com/viktorkizera.png")) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Circle()
-                            .fill(Color(hex: "FF6B6B"))
-                            .overlay(
-                                Text("VK")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white)
-                            )
+                    Button(action: { showSettings = true }) {
+                        AsyncImage(url: URL(string: "https://github.com/viktorkizera.png")) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Circle()
+                                .fill(Color(hex: "FF6B6B"))
+                                .overlay(
+                                    Text("VK")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white)
+                                )
+                        }
+                        .frame(width: 32, height: 32)
+                        .clipShape(Circle())
                     }
-                    .frame(width: 32, height: 32)
-                    .clipShape(Circle())
+                    .buttonStyle(PlainButtonStyle())
+                    .sheet(isPresented: $showSettings) {
+                        SettingsView()
+                    }
                 }
             }
             .padding(.horizontal, spacing)
@@ -141,6 +151,36 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+// Додаю заглушку для NotificationListView
+struct NotificationListView: View {
+    @Environment(\.dismiss) var dismiss
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                Image(systemName: "bell.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.blue)
+                    .padding(.top, 32)
+                Text("Сповіщення")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Text("Тут будуть зберігатися всі ваші push-сповіщення.")
+                    .font(.body)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                Spacer()
+            }
+            .navigationTitle("Сповіщення")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Закрити") { dismiss() }
+                }
+            }
+        }
     }
 }
 
