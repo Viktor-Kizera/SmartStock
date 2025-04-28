@@ -25,6 +25,7 @@ enum AnalyticsPeriod: String, CaseIterable, Equatable {
 
 struct ContentView: View {
     @StateObject private var appState = AppState()
+    @StateObject private var notificationManager = NotificationManager()
     @State private var selectedTab: Tab = .home
     @State private var selectedAnalyticsPeriod: AnalyticsPeriod = .thisYear
     @State private var showSplash = true
@@ -44,10 +45,11 @@ struct ContentView: View {
                         .zIndex(10)
                 } else {
                     TabView(selection: $selectedTab) {
-        NavigationStack {
-            ScrollView {
+                        NavigationStack {
+                            ScrollView {
                                 VStack(spacing: 12) {
                                     HeaderView()
+                                        .environmentObject(notificationManager)
                                         .padding(.top, 16)
                                     
                                     VStack(spacing: 20) {
@@ -55,9 +57,9 @@ struct ContentView: View {
                                         AIInsightsView()
                                         QuickActionsView()
                                         RecentProductsView()
-                    }
-                }
-                .padding(.horizontal)
+                                    }
+                                }
+                                .padding(.horizontal)
                                 .padding(.bottom, 90)
                             }
                             .background(Color(uiColor: .systemGray6))
@@ -159,6 +161,7 @@ struct ContentView: View {
                         NavigationStack {
                             ProductsView()
                                 .environmentObject(appState.productManager)
+                                .environmentObject(notificationManager)
                         }
                         .tag(Tab.products)
                         
@@ -200,6 +203,7 @@ struct HomeView: View {
 
 struct ProductsView: View {
     @EnvironmentObject var productManager: ProductManager
+    @EnvironmentObject var notificationManager: NotificationManager
     @State private var searchText = ""
     @State private var showingAddProduct = false
     @State private var selectedProduct: ProductItem?
@@ -313,6 +317,7 @@ struct ProductsView: View {
         .background(Color(uiColor: .systemGray6))
         .sheet(isPresented: $showingAddProduct) {
             AddProductView()
+                .environmentObject(notificationManager)
         }
         .sheet(item: $selectedProduct) { product in
             ProductDetailView(product: product)
@@ -436,6 +441,7 @@ struct GlassButton: View {
 struct AddProductView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var productManager: ProductManager
+    @EnvironmentObject var notificationManager: NotificationManager
     @State private var productName = ""
     @State private var monthlySales: [String: Int] = [:]
     @State private var unitPrice: Double = 0.0
@@ -622,12 +628,14 @@ struct AddProductView: View {
     
     private func sendProductNotification(name: String, quantity: Int, price: Double, currency: Currency) {
         let content = UNMutableNotificationContent()
-        content.title = "Додано новий товар"
-        content.body = "Назва: \(name) | Кількість: \(quantity) | Ціна: \(currency.symbol)\(String(format: "%.2f", price))"
+        content.title = "New product added"
+        content.body = "Name: \(name) | Quantity: \(quantity) units | Price: \(currency.symbol)\(String(format: "%.2f", price)) per unit"
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+        let emoji = ProductItem.findEmoji(for: name)
+        notificationManager.add(AppNotification(title: content.title, body: content.body, productEmoji: emoji))
     }
 }
 

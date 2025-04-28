@@ -87,7 +87,7 @@ struct ProductItem: Identifiable, Codable, Hashable, Equatable {
         "donut": "🍩"
     ]
     
-    private static func findEmoji(for name: String) -> String {
+    static func findEmoji(for name: String) -> String {
         let lowercaseName = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
         // Спочатку шукаємо точне співпадіння
