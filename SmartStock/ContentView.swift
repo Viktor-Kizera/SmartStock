@@ -70,6 +70,12 @@ struct ContentView: View {
                                 .padding(.bottom, 90)
                             }
                             .background(Color(uiColor: .systemGray6))
+                            .overlay(
+                                GeminiChatFloatingButton()
+                                    .padding(.trailing, 24)
+                                    .padding(.bottom, 32),
+                                alignment: .bottomTrailing
+                            )
                         }
                         .tag(Tab.home)
                         
